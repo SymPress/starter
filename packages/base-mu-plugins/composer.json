@@ -1,0 +1,63 @@
+{
+    "name": "sympress/base-mu-plugins",
+    "description": "Base MU plugins for the SymPress Starter",
+    "type": "wordpress-muplugin",
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "SymPress",
+            "email": "info@sympress.de"
+        }
+    ],
+    "require": {
+        "php": "^8.5",
+        "sympress/kernel": "dev-main"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./../*",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "require-dev": {
+        "sympress/coding-standards": "^1.0"
+    },
+    "scripts": {
+        "cs": [
+            "Composer\\Config::disableProcessTimeout",
+            "cd ../.. && vendor/bin/phpcs --standard=packages/base-mu-plugins/phpcs.xml.dist"
+        ],
+        "cs:fix": [
+            "Composer\\Config::disableProcessTimeout",
+            "cd ../.. && vendor/bin/phpcbf --standard=packages/base-mu-plugins/phpcs.xml.dist"
+        ],
+        "static-analysis": [
+            "Composer\\Config::disableProcessTimeout",
+            "cd ../.. && vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress"
+        ],
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "cd ../.. && vendor/bin/phpunit --configuration phpunit.xml.dist --testsuite base-mu-plugins"
+        ],
+        "qa": [
+            "@cs",
+            "@static-analysis",
+            "@test"
+        ]
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "sort-packages": true
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "1.0.x-dev"
+        }
+    },
+    "prefer-stable": true
+}

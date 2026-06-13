@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<ruleset name="SymPress Base MU Plugins">
+    <description>
+        SymPress coding standard audit for the base MU plugin entrypoints.
+    </description>
+
+    <arg name="colors" />
+    <arg value="sp" />
+    <arg name="basepath" value="." />
+
+    <config name="testVersion" value="8.5-" />
+    <config name="text_domain" value="sympress" />
+
+    <file>000-error-reporting.php</file>
+    <file>allowed-html-tags.php</file>
+    <file>app-starter.php</file>
+    <file>disable.php</file>
+    <file>global-functions.php</file>
+    <file>vardumper-integration.php</file>
+
+    <exclude-pattern>vendor/*</exclude-pattern>
+    <exclude-pattern>.phpunit.cache/*</exclude-pattern>
+
+    <rule ref="SymPress-Boundary">
+        <exclude name="Generic.CodeAnalysis.AssignmentInCondition.Found" />
+        <exclude name="PSR12.Files.FileHeader.IncorrectOrder" />
+        <exclude name="SlevomatCodingStandard.ControlStructures.AssignmentInCondition.AssignmentInCondition" />
+        <exclude name="SlevomatCodingStandard.Functions.UnusedParameter.UnusedParameter" />
+        <exclude name="SlevomatCodingStandard.TypeHints.ReturnTypeHint.MissingAnyTypeHint" />
+        <exclude name="SlevomatCodingStandard.Variables.DisallowSuperGlobalVariable.DisallowedSuperGlobalVariable" />
+        <exclude name="Squiz.Classes.ClassFileName.NoMatch" />
+        <exclude name="Squiz.PHP.DisallowMultipleAssignments.FoundInControlStructure" />
+        <exclude name="Squiz.PHP.GlobalKeyword.NotAllowed" />
+        <exclude name="SymPress.Files.LineLength.TooLong" />
+        <exclude name="SymPress.Functions.ArgumentTypeDeclaration.NoArgumentType" />
+        <exclude name="SymPress.Functions.ReturnTypeDeclaration.NoReturnType" />
+        <exclude name="SymPress.Namespaces.Psr4.WrongFilename" />
+        <exclude name="SymPress.NamingConventions.VariableName.SnakeCaseVar" />
+        <exclude name="WordPress.PHP.DevelopmentFunctions.error_log_error_log" />
+        <exclude name="WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler" />
+        <exclude name="WordPress.PHP.DevelopmentFunctions.prevent_path_disclosure_error_reporting" />
+        <exclude name="WordPress.PHP.DiscouragedPHPFunctions.runtime_configuration_error_reporting" />
+        <exclude name="WordPress.PHP.IniSet.Risky" />
+        <exclude name="WordPress.PHP.IniSet.display_errors_Disallowed" />
+        <exclude name="WordPress.PHP.IniSet.log_errors_Disallowed" />
+        <exclude name="WordPress.Security.SafeRedirect.wp_redirect_wp_redirect" />
+        <exclude name="WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents" />
+        <exclude name="WordPressVIPMinimum.Hooks.AlwaysReturnInFilter.MissingReturnStatement" />
+        <exclude name="WordPressVIPMinimum.Hooks.AlwaysReturnInFilter.VoidReturn" />
+    </rule>
+</ruleset>
