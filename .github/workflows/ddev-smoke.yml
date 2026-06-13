@@ -19,13 +19,17 @@ jobs:
       ddev_start_command: ':'
       setup_command: |
         cp .env.example .env
-        ddev config --project-name=sympress-starter --project-tld=ddev.site --project-type=php --docroot=public --webserver-type=nginx-fpm
         ddev start
+        primary_url="$(ddev describe -j | jq -r '.raw.primary_url // empty')"
+        test -n "$primary_url"
+        perl -0pi -e "s#https://sympress-starter\\.ddev\\.site#$primary_url#g" .env
         ddev composer install
       playwright_install_command: ':'
       playwright_run_command: |
         ddev exec wp core is-installed
         ddev exec wp db check
-        curl -k -I --fail --max-time 20 https://sympress-starter.ddev.site
+        primary_url="$(ddev describe -j | jq -r '.raw.primary_url // empty')"
+        test -n "$primary_url"
+        curl -k -I --fail --max-time 20 "$primary_url"
     secrets:
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
