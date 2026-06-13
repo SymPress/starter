@@ -1,0 +1,94 @@
+{
+    "name": "sympress/starter",
+    "type": "project",
+    "description": "SymPress Starter for WordPress projects",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": "^8.5",
+        "sympress/base-mu-plugins": "^1.0@dev",
+        "sympress/kernel": "dev-main as 1.0.x-dev",
+        "sympress/monolog-bundle": "dev-main as 1.0.x-dev",
+        "sympress/wp-cli-console": "dev-main as 1.0.x-dev",
+        "johnpbloch/wordpress": "^7.0.0",
+        "wecodemore/wpstarter": "^3.0.1",
+        "wp-cli/wp-cli-bundle": "^2.12.0",
+        "wpackagist-theme/twentytwentyfive": "^1.5.0"
+    },
+    "require-dev": {
+        "phpstan/extension-installer": "^1.4.3",
+        "phpstan/phpstan": "^2.2.2",
+        "phpunit/phpunit": "^12.0",
+        "sympress/coding-standards": "^1.0",
+        "sympress/profiler": "dev-main as 1.0.x-dev",
+        "symfony/var-dumper": "^8.1.0",
+        "szepeviktor/phpstan-wordpress": "^2.0.3"
+    },
+    "extra": {
+        "wordpress-install-dir": "public/wp",
+        "wordpress-content-dir": "public/wp-content",
+        "wpstarter": "dev-ops/wpstarter.json",
+        "installer-paths": {
+            "public/wp-content/mu-plugins/{$name}": [
+                "type:wordpress-muplugin"
+            ],
+            "public/wp-content/plugins/{$name}": [
+                "type:wordpress-plugin"
+            ],
+            "public/wp-content/themes/{$name}": [
+                "type:wordpress-theme"
+            ]
+        },
+        "branch-alias": {
+            "dev-main": "1.0.x-dev"
+        }
+    },
+    "scripts": {
+        "setup": "bin/console setup",
+        "cs": "vendor/bin/phpcs --standard=phpcs.xml.dist",
+        "cs:fix": "vendor/bin/phpcbf --standard=phpcs.xml.dist",
+        "static-analysis": "vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress",
+        "test": "vendor/bin/phpunit --configuration phpunit.xml.dist",
+        "qa": [
+            "@cs",
+            "@static-analysis",
+            "@test"
+        ],
+        "cleanup": "rm -rf ./public/wp/wp-content",
+        "post-install-cmd": [
+            "@cleanup"
+        ],
+        "post-update-cmd": [
+            "@cleanup"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "platform": {
+            "php": "8.5"
+        },
+        "allow-plugins": {
+            "johnpbloch/wordpress-core-installer": true,
+            "composer/installers": true,
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "wecodemore/wpstarter": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "./packages/*",
+            "options": {
+                "symlink": true,
+                "versions": {
+                    "sympress/base-mu-plugins": "1.0.x-dev"
+                }
+            }
+        },
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org"
+        }
+    ]
+}

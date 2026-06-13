@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<ruleset name="SymPress Project Coding Standard">
+    <config name="testVersion" value="8.5-" />
+    <config name="minimum_supported_wp_version" value="7.0" />
+
+    <arg name="colors" />
+    <arg value="sp" />
+
+    <rule ref="SymPress-Plugin">
+        <exclude name="SymPress.Classes.PropertyLimit.TooManyProperties" />
+        <exclude name="SymPress.Functions.FunctionBodyStart.WrongForMultiLineDeclaration" />
+        <exclude-pattern>*/packages/*/*.php</exclude-pattern>
+        <exclude-pattern>*/packages/*/config/*</exclude-pattern>
+        <exclude-pattern>*/packages/*/functions.php</exclude-pattern>
+        <exclude-pattern>*/templates/*</exclude-pattern>
+        <exclude-pattern>*/views/*</exclude-pattern>
+    </rule>
+
+    <rule ref="SymPress-Boundary">
+        <include-pattern>*/packages/*/*.php</include-pattern>
+        <include-pattern>*/packages/*/config/*</include-pattern>
+        <include-pattern>*/packages/*/functions.php</include-pattern>
+    </rule>
+
+    <rule ref="SymPress-Templates">
+        <include-pattern>*/templates/*</include-pattern>
+        <include-pattern>*/views/*</include-pattern>
+    </rule>
+
+    <rule ref="SymPress.Functions.ArgumentTypeDeclaration">
+        <properties>
+            <property name="allowedMethodNames" type="array">
+                <element value="process" />
+            </property>
+        </properties>
+    </rule>
+
+    <file>./packages</file>
+
+    <exclude-pattern>*/assets/*</exclude-pattern>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/resources/*/build/*</exclude-pattern>
+    <exclude-pattern>*/tests/fixtures/*</exclude-pattern>
+    <exclude-pattern>*/tests/e2e/test-package/*</exclude-pattern>
+    <exclude-pattern>*/var/cache/*</exclude-pattern>
+</ruleset>
