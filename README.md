@@ -9,7 +9,7 @@ Composer project starter and GitHub template for new WordPress websites in the S
 - Base MU plugins in `packages/base-mu-plugins`
 - DDEV configuration for PHP 8.5, MariaDB 11.8, and nginx-fpm
 - WPStarter orchestration for first install and repeatable local setup
-- PHPCS, PHPStan, PHPUnit, Composer audit, Dependabot/Renovate, CodeQL, and DDEV smoke-test wiring
+- PHPCS, PHPStan, PHPUnit, Composer audit, Dependabot/Renovate, and DDEV smoke-test wiring
 
 ## Requirements
 

@@ -16,11 +16,20 @@ jobs:
     with:
       php_version: '8.5'
       allow_custom_commands: true
-      ddev_setup_command: bin/console setup sympress-starter
+      ddev_start_command: ':'
+      setup_command: |
+        cp .env.example .env
+        ddev start
+        primary_url="$(ddev describe -j | jq -r '.raw.primary_url // empty')"
+        test -n "$primary_url"
+        perl -0pi -e "s#https://sympress-starter\\.ddev\\.site#$primary_url#g" .env
+        ddev composer install
       playwright_install_command: ':'
-      playwright_command: |
+      playwright_run_command: |
         ddev exec wp core is-installed
         ddev exec wp db check
-        curl -k -I --fail --max-time 20 https://sympress-starter.ddev.site
+        primary_url="$(ddev describe -j | jq -r '.raw.primary_url // empty')"
+        test -n "$primary_url"
+        curl -k -I --fail --max-time 20 "$primary_url"
     secrets:
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
