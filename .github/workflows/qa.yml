@@ -1,0 +1,21 @@
+name: QA
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    uses: sympress/workflows/.github/workflows/sympress-qa.yml@v1
+    with:
+      include_root: true
+      package_glob: __no_packages__
+      php_version: '8.5'
+    secrets:
+      COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
