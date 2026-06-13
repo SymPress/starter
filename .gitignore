@@ -1,0 +1,42 @@
+### Local environment
+.env
+.env.*
+!.env.example
+.env.cached.php
+wp-cli.yml
+
+### Dependencies and generated WordPress runtime
+public
+vendor
+
+### Test and build artifacts
+.phpunit.cache
+coverage
+var
+
+### DDEV generated artifacts
+.ddev/.dbimageBuild/
+.ddev/.ddev-docker-*.yaml
+.ddev/.homeadditions/
+.ddev/.importdb*
+.ddev/.sshimageBuild/
+.ddev/.webimageBuild/
+.ddev/addon-metadata/
+.ddev/apache/
+.ddev/commands/.gitattributes
+.ddev/config.local.y*ml
+.ddev/config.*.local.y*ml
+.ddev/db_snapshots/
+.ddev/homeadditions/
+.ddev/mutagen/
+.ddev/postgres/postgresql.conf
+.ddev/providers/*.yaml
+!.ddev/providers/*.yaml.example
+.ddev/share-providers/*.sh
+!.ddev/share-providers/*.sh.example
+.ddev/traefik/
+.ddev/xhprof/
+
+### IDE / OS
+.idea
+.DS_Store

@@ -1,0 +1,51 @@
+# Secrets and local runtime configuration
+.env
+.env.*
+!.env.example
+!.env.dist
+.env.cached.php
+public/wp-config.php
+
+# Dependencies
+vendor/
+**/vendor/
+node_modules/
+**/node_modules/
+
+# Git / IDE / OS
+.git/
+**/.git/
+.idea/
+.DS_Store
+
+# Runtime, cache, logs, test artifacts
+var/
+**/.phpunit.cache/
+.phpunit.result.cache
+coverage/
+.nyc_output/
+*.log
+
+# WordPress core and runtime content
+public/wp/
+public/wp-content/uploads/
+public/wp-content/upgrade/
+public/wp-content/cache/
+public/wp-content/ewww/
+public/wp-content/languages/
+
+# Installed third-party plugins/themes
+public/wp-content/plugins/*
+public/wp-content/themes/*
+
+# Generated package assets
+packages/*/assets/
+!packages/base-mu-plugins/assets/
+!packages/base-mu-plugins/assets/**
+
+# DDEV artifacts
+.ddev/db_snapshots/
+.ddev/mutagen/
+.ddev/traefik/certs/
+.ddev/.dbimageBuild/
+.ddev/.webimageBuild/

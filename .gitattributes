@@ -1,0 +1,12 @@
+/.codexignore export-ignore
+/.DS_Store export-ignore
+/.ddev/.dbimageBuild export-ignore
+/.ddev/.ddev-docker-*.yaml export-ignore
+/.ddev/.homeadditions export-ignore
+/.ddev/.webimageBuild export-ignore
+/.idea export-ignore
+/.phpunit.cache export-ignore
+/coverage export-ignore
+/public export-ignore
+/var export-ignore
+/vendor export-ignore
