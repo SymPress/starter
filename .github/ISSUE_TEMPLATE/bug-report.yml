@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a reproducible problem in SymPress.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve SymPress. Please include enough detail for maintainers to reproduce the issue.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and what you expected instead.
+      placeholder: SymPress does...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Provide a minimal reproduction or exact steps.
+      placeholder: |
+        1. Install...
+        2. Configure...
+        3. Run...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Share the relevant versions.
+      value: |
+        - PHP:
+        - WordPress:
+        - Symfony component versions:
+        - SymPress package and version:
+        - Web server / CLI context:
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Paste stack traces, logs, screenshots, or failing test output.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched existing issues.
+          required: true
+        - label: I can reproduce this with the latest relevant SymPress version.
+          required: false

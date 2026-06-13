@@ -1,0 +1,55 @@
+name: Feature request
+description: Suggest a focused improvement for SymPress.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        SymPress works best when features stay composable and close to real WordPress integration needs.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+      description: What are you trying to build, integrate, or simplify?
+      placeholder: I need to...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the API, behavior, or package-level change you have in mind.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Mention existing WordPress, Symfony, or SymPress approaches you considered.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      multiple: true
+      options:
+        - Dependency injection
+        - Event dispatcher / hooks
+        - Configuration
+        - Contracts
+        - WordPress integration
+        - Documentation
+        - Developer tooling
+        - Other
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched existing issues and discussions.
+          required: true
+        - label: This proposal can be implemented without hiding core WordPress behavior.
+          required: false

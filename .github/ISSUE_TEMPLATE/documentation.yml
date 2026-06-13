@@ -1,0 +1,33 @@
+name: Documentation
+description: Suggest or contribute documentation improvements.
+title: "[Docs]: "
+labels:
+  - documentation
+body:
+  - type: textarea
+    id: location
+    attributes:
+      label: Documentation location
+      description: Link to the page, package, section, or repository that needs work.
+      placeholder: README, package docs, examples, API reference...
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What should change?
+      description: Explain what is missing, confusing, outdated, or incorrect.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested wording or structure
+      description: Optional draft text, outline, or example.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I checked whether the same documentation issue was already reported.
+          required: true
