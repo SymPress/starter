@@ -82,7 +82,7 @@ Recommended baseline:
 - uptime check for the frontend
 - uptime check for `/wp-login.php` or the admin entrypoint
 - dependency/security update monitoring
-- CodeQL alerts and dependency update pull requests
+- composer audit alerts and dependency update pull requests
 
 ## Runtime Modes
 
