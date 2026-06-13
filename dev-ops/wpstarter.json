@@ -1,0 +1,8 @@
+{
+    "env-example": false,
+    "register-theme-folder": false,
+    "prevent-overwrite": [".gitignore"],
+    "cache-env": true,
+    "content-dev-op": "copy",
+    "wp-cli-commands": "dev-ops/orchestrate.php"
+}

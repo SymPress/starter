@@ -1,0 +1,712 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use SymPress\Kernel\App;
+use SymPress\Kernel\Kernel\SiteKernel;
+use Symfony\Component\Console\Application;
+
+$projectDir = dirname(__DIR__);
+$autoload = $projectDir . '/vendor/autoload.php';
+$commandName = $argv[1] ?? null;
+
+if (isStarterCommand($commandName)) {
+    chdir($projectDir);
+
+    exit(runStarterCommand((string) $commandName, array_slice($argv, 2), $projectDir));
+}
+
+if (($commandName === null || $commandName === 'starter:help') && !is_readable($autoload)) {
+    showStarterHelp();
+
+    exit(0);
+}
+
+if (!is_readable($autoload)) {
+    fwrite(STDERR, "Composer autoload file not found. Run bin/console setup my-project first.\n");
+    fwrite(STDERR, "Run bin/console starter:help for setup and diagnostic commands.\n");
+
+    exit(1);
+}
+
+require_once $autoload;
+
+$wpLoad = $projectDir . '/public/wp/wp-load.php';
+
+if (is_readable($wpLoad)) {
+    if (!defined('WP_USE_THEMES')) {
+        define('WP_USE_THEMES', false);
+    }
+
+    require_once $wpLoad;
+}
+
+if (!App::kernel()) {
+    App::bootKernel(new SiteKernel($projectDir));
+}
+
+$application = App::make(Application::class);
+
+if (!$application instanceof Application) {
+    fwrite(STDERR, "Symfony Console application is not available from the kernel container.\n");
+    exit(1);
+}
+
+exit($application->run());
+
+function isStarterCommand(?string $commandName): bool
+{
+    return in_array(
+        $commandName,
+        [
+            'setup',
+            'starter:help',
+            'starter:setup',
+            'check',
+            'starter:check',
+            'doctor',
+            'starter:doctor',
+            'diagnose-login',
+            'starter:diagnose-login',
+            'perf',
+            'starter:perf',
+            'reset',
+            'starter:reset',
+        ],
+        true,
+    );
+}
+
+/**
+ * @param list<string> $args
+ */
+function runStarterCommand(string $commandName, array $args, string $projectDir): int
+{
+    return match ($commandName) {
+        'starter:help' => showStarterHelpAndReturn(),
+        'setup', 'starter:setup' => starterSetup($projectDir, $args),
+        'diagnose-login', 'starter:diagnose-login' => starterDiagnoseLogin($projectDir, $args),
+        'check', 'starter:check' => starterCheck($projectDir),
+        'doctor', 'starter:doctor' => starterDoctor($projectDir),
+        'perf', 'starter:perf' => starterPerf($projectDir, $args),
+        'reset', 'starter:reset' => starterReset($projectDir, $args),
+        default => 1,
+    };
+}
+
+function showStarterHelpAndReturn(): int
+{
+    showStarterHelp();
+
+    return 0;
+}
+
+function showStarterHelp(): void
+{
+    echo "SymPress Starter commands:\n";
+    echo "  bin/console setup [project-name]\n";
+    echo "  bin/console check\n";
+    echo "  bin/console doctor\n";
+    echo "  bin/console diagnose-login [--env-file=.env]\n";
+    echo "  bin/console perf [env-file]\n";
+    echo "  bin/console reset --yes [project-name]\n";
+}
+
+/**
+ * @param list<string> $args
+ */
+function starterSetup(string $projectDir, array $args): int
+{
+    $projectName = '';
+
+    foreach ($args as $arg) {
+        if ($arg === '-h' || $arg === '--help') {
+            showStarterHelp();
+
+            return 0;
+        }
+
+        if (str_starts_with($arg, '-')) {
+            fwrite(STDERR, "Unknown option: {$arg}\n");
+            showStarterHelp();
+
+            return 1;
+        }
+
+        if ($projectName !== '') {
+            fwrite(STDERR, "Unexpected argument: {$arg}\n");
+            showStarterHelp();
+
+            return 1;
+        }
+
+        $projectName = $arg;
+    }
+
+    $projectName = resolveProjectName($projectDir, $projectName);
+
+    if ($projectName === '') {
+        fwrite(STDERR, "Unable to determine a DDEV project name.\n");
+        showStarterHelp();
+
+        return 1;
+    }
+
+    $projectTld = getenv('DDEV_PROJECT_TLD') ?: 'ddev.site';
+    $wpHome = "https://{$projectName}.{$projectTld}";
+    $dryRun = getenv('SYMPRESS_SETUP_DRY_RUN') ?: '0';
+
+    if ($dryRun === '1' || $dryRun === 'true') {
+        echo "DDEV_PROJECT_NAME={$projectName}\n";
+        echo "DDEV_PROJECT_TLD={$projectTld}\n";
+        echo "WP_HOME={$wpHome}\n";
+        echo "WP_SITEURL=\${WP_HOME}/wp\n";
+        echo "DDEV_CONFIG_ARGS=--project-name={$projectName} --project-tld={$projectTld} --project-type=php --docroot=public --webserver-type=nginx-fpm\n";
+
+        return 0;
+    }
+
+    if (!ensureCommand('ddev', 'DDEV is required to set up this project.')) {
+        return 1;
+    }
+
+    $envFile = $projectDir . '/.env';
+    $envExample = $projectDir . '/.env.example';
+
+    if (!is_file($envFile) && !copy($envExample, $envFile)) {
+        fwrite(STDERR, "Unable to create .env from .env.example.\n");
+
+        return 1;
+    }
+
+    $exitCode = runProcess(
+        [
+            'ddev',
+            'config',
+            "--project-name={$projectName}",
+            "--project-tld={$projectTld}",
+            '--project-type=php',
+            '--docroot=public',
+            '--webserver-type=nginx-fpm',
+        ],
+    );
+
+    if ($exitCode !== 0) {
+        return $exitCode;
+    }
+
+    $adminPassword = readEnvValue($envFile, 'WP_ADMIN_PASSWORD');
+
+    if ($adminPassword === '' || $adminPassword === 'admin') {
+        $adminPassword = generatePassword();
+    }
+
+    updateEnvValues(
+        $envFile,
+        [
+            'WP_HOME' => $wpHome,
+            'WP_SITEURL' => '${WP_HOME}/wp',
+            'WP_ADMIN_PASSWORD' => $adminPassword,
+        ],
+    );
+
+    foreach ([['ddev', 'start'], ['ddev', 'composer', 'install']] as $command) {
+        $exitCode = runProcess($command);
+
+        if ($exitCode !== 0) {
+            return $exitCode;
+        }
+    }
+
+    echo "\n";
+    echo "SymPress project is ready: {$wpHome}\n";
+    echo "WordPress admin: {$wpHome}/wp-admin/\n";
+    echo "WordPress admin username: " . (readEnvValue($envFile, 'WP_ADMIN_USERNAME') ?: 'admin') . "\n";
+    echo "WordPress admin password: {$adminPassword}\n";
+
+    return 0;
+}
+
+/**
+ * @param list<string> $args
+ */
+function starterDiagnoseLogin(string $projectDir, array $args): int
+{
+    $envFile = '.env';
+
+    for ($index = 0; $index < count($args); $index++) {
+        $arg = $args[$index];
+
+        if ($arg === '-h' || $arg === '--help') {
+            echo "Usage: bin/console diagnose-login [--env-file=.env]\n";
+
+            return 0;
+        }
+
+        if (str_starts_with($arg, '--env-file=')) {
+            $envFile = substr($arg, strlen('--env-file='));
+            continue;
+        }
+
+        if ($arg === '--env-file') {
+            $index++;
+
+            if (!isset($args[$index])) {
+                fwrite(STDERR, "--env-file requires a value.\n");
+
+                return 1;
+            }
+
+            $envFile = $args[$index];
+            continue;
+        }
+
+        fwrite(STDERR, "Unknown option: {$arg}\n");
+
+        return 1;
+    }
+
+    $envPath = pathIsAbsolute($envFile) ? $envFile : $projectDir . '/' . $envFile;
+    $projectName = resolveProjectName($projectDir, '');
+    $projectTld = getenv('DDEV_PROJECT_TLD') ?: 'ddev.site';
+    $wpHome = "https://{$projectName}.{$projectTld}";
+    $diagnoseHome = readEnvValue($envPath, 'WP_HOME') ?: $wpHome;
+    $diagnoseSiteUrl = readEnvValue($envPath, 'WP_SITEURL');
+
+    if (str_starts_with($diagnoseSiteUrl, '${WP_HOME}')) {
+        $diagnoseSiteUrl = $diagnoseHome . substr($diagnoseSiteUrl, strlen('${WP_HOME}'));
+    }
+
+    if ($diagnoseSiteUrl === '') {
+        $diagnoseSiteUrl = "{$diagnoseHome}/wp";
+    }
+
+    $host = preg_replace('#^https?://#', '', $diagnoseHome) ?: '';
+    $host = explode('/', $host, 2)[0] ?? '';
+    $setupProjectName = explode('.', $host, 2)[0] ?: $projectName;
+
+    echo "=== WordPress Login Diagnostic ===\n\n";
+    echo "Environment file: {$envFile}\n";
+    echo "Expected home:    {$diagnoseHome}\n";
+    echo "Expected siteurl: {$diagnoseSiteUrl}\n\n";
+
+    $wpConfig = $projectDir . '/public/wp-config.php';
+
+    if (is_file($wpConfig)) {
+        echo "wp-config.php found.\n\n";
+        echo "Relevant wp-config.php values:\n";
+
+        $matches = preg_grep(
+            '/(WP_HOME|WP_SITEURL|WP_CONTENT_DIR|COOKIE_DOMAIN|COOKIEPATH|SITECOOKIEPATH|ADMIN_COOKIE_PATH)/',
+            file($wpConfig, FILE_IGNORE_NEW_LINES) ?: [],
+        );
+
+        echo $matches === [] ? "  No explicit values found.\n" : implode("\n", $matches) . "\n";
+    } else {
+        echo "wp-config.php not found. Run bin/console setup {$setupProjectName} first.\n";
+    }
+
+    echo "\n";
+    echo "Check current database values:\n";
+    echo "  ddev exec wp option get home\n";
+    echo "  ddev exec wp option get siteurl\n\n";
+    echo "Fix database values:\n";
+    echo "  ddev exec wp option update home " . escapeshellarg($diagnoseHome) . "\n";
+    echo "  ddev exec wp option update siteurl " . escapeshellarg($diagnoseSiteUrl) . "\n\n";
+    echo "Optional cookie constants for debugging login redirects:\n";
+    echo "  define('COOKIE_DOMAIN', '{$host}');\n";
+    echo "  define('COOKIEPATH', '/');\n";
+    echo "  define('SITECOOKIEPATH', '/');\n";
+    echo "  define('ADMIN_COOKIE_PATH', '/');\n";
+
+    return 0;
+}
+
+function starterCheck(string $projectDir): int
+{
+    if (!ensureCommand('ddev', 'DDEV is required to run project checks.')) {
+        return 1;
+    }
+
+    foreach (
+        [
+            ['ddev', 'composer', 'validate', '--no-check-publish'],
+            ['ddev', 'composer', 'audit', '--locked', '--no-interaction'],
+            ['ddev', 'composer', 'qa'],
+            ['ddev', 'exec', 'wp', '--info'],
+            ['ddev', 'exec', 'wp', 'core', 'is-installed'],
+            ['ddev', 'exec', 'wp', 'db', 'check'],
+        ] as $command
+    ) {
+        $exitCode = runProcess($command);
+
+        if ($exitCode !== 0) {
+            return $exitCode;
+        }
+    }
+
+    $envFile = $projectDir . '/.env';
+
+    if (is_file($envFile) && commandExists('curl')) {
+        $wpHome = readEnvValue($envFile, 'WP_HOME');
+
+        if ($wpHome !== '') {
+            return runProcess(['curl', '-k', '-I', '--fail', '--max-time', '20', $wpHome]);
+        }
+    }
+
+    return 0;
+}
+
+function starterDoctor(string $projectDir): int
+{
+    $status = 0;
+
+    $status = checkCommand('ddev') ? $status : 1;
+    $status = checkCommand('docker') ? $status : 1;
+
+    checkFile($projectDir . '/.env', '.env');
+    checkFile($projectDir . '/.env.example', '.env.example');
+    checkFile($projectDir . '/composer.json', 'composer.json');
+    checkFile($projectDir . '/.ddev/config.yaml', '.ddev/config.yaml');
+    checkFile($projectDir . '/dev-ops/wpstarter.json', 'dev-ops/wpstarter.json');
+    checkFile($projectDir . '/dev-ops/orchestrate.php', 'dev-ops/orchestrate.php');
+
+    $ddevConfig = $projectDir . '/.ddev/config.yaml';
+
+    if (is_file($ddevConfig)) {
+        if (preg_match('/^project_tld:\s*ddev\.site$/m', (string) file_get_contents($ddevConfig)) === 1) {
+            echo "[OK] DDEV project_tld is ddev.site\n";
+        } else {
+            echo "[WARN] DDEV project_tld is not ddev.site\n";
+        }
+    }
+
+    $envFile = $projectDir . '/.env';
+
+    if (is_file($envFile)) {
+        $wpHome = readEnvValue($envFile, 'WP_HOME');
+
+        if (preg_match('/^https:\/\/.+\.ddev\.site(?:\/.*)?$/', $wpHome) === 1) {
+            echo "[OK] WP_HOME uses ddev.site\n";
+        } else {
+            echo "[WARN] WP_HOME does not use ddev.site\n";
+        }
+    } else {
+        echo "[INFO] Run bin/console setup my-project to create .env\n";
+    }
+
+    if (commandExists('ddev')) {
+        echo "[INFO] Run ddev status to inspect container state\n";
+    }
+
+    $composerFile = $projectDir . '/composer.json';
+    $composer = is_file($composerFile)
+        ? json_decode((string) file_get_contents($composerFile), true)
+        : [];
+
+    if (($composer['config']['allow-plugins']['wecodemore/wpstarter'] ?? false) === true) {
+        echo "[OK] WPStarter Composer plugin is allowed\n";
+    } else {
+        echo "[ERROR] WPStarter Composer plugin is not allowed in composer.json\n";
+        $status = 1;
+    }
+
+    return $status;
+}
+
+/**
+ * @param list<string> $args
+ */
+function starterPerf(string $projectDir, array $args): int
+{
+    if (!ensureCommand('curl', 'curl is required to run the performance smoke check.')) {
+        return 1;
+    }
+
+    $envFile = $args[0] ?? '.env';
+    $envPath = pathIsAbsolute($envFile) ? $envFile : $projectDir . '/' . $envFile;
+
+    if (!is_file($envPath)) {
+        fwrite(STDERR, "{$envFile} not found. Run bin/console setup my-project first.\n");
+
+        return 1;
+    }
+
+    $wpHome = readEnvValue($envPath, 'WP_HOME');
+
+    if ($wpHome === '') {
+        fwrite(STDERR, "WP_HOME is missing in {$envFile}.\n");
+
+        return 1;
+    }
+
+    $headers = tempnam(sys_get_temp_dir(), 'sympress-headers-');
+
+    if ($headers === false) {
+        fwrite(STDERR, "Unable to create temporary header file.\n");
+
+        return 1;
+    }
+
+    try {
+        echo "Performance smoke: {$wpHome}\n";
+
+        for ($run = 1; $run <= 2; $run++) {
+            echo "\nRequest {$run}:\n";
+
+            $exitCode = runProcess(
+                [
+                    'curl',
+                    '-k',
+                    '-sS',
+                    '-o',
+                    '/dev/null',
+                    '-D',
+                    $headers,
+                    '-w',
+                    'HTTP %{http_code} in %{time_total}s\n',
+                    '--fail',
+                    '--max-time',
+                    '20',
+                    $wpHome,
+                ],
+            );
+
+            if ($exitCode !== 0) {
+                return $exitCode;
+            }
+
+            $matchingHeaders = preg_grep(
+                '/^(cache-control|age|x-cache|x-fastcgi-cache|x-nginx-cache|server):/i',
+                file($headers, FILE_IGNORE_NEW_LINES) ?: [],
+            );
+
+            if ($matchingHeaders === []) {
+                echo "No common cache headers found.\n";
+                continue;
+            }
+
+            echo implode("\n", $matchingHeaders) . "\n";
+        }
+    } finally {
+        @unlink($headers);
+    }
+
+    return 0;
+}
+
+/**
+ * @param list<string> $args
+ */
+function starterReset(string $projectDir, array $args): int
+{
+    $confirm = false;
+    $projectName = null;
+
+    foreach ($args as $arg) {
+        if ($arg === '-y' || $arg === '--yes') {
+            $confirm = true;
+            continue;
+        }
+
+        if ($arg === '-h' || $arg === '--help') {
+            echo "Usage: bin/console reset --yes [project-name]\n";
+
+            return 0;
+        }
+
+        if (str_starts_with($arg, '-')) {
+            fwrite(STDERR, "Unknown option: {$arg}\n");
+
+            return 1;
+        }
+
+        $projectName = $arg;
+    }
+
+    if (!$confirm) {
+        echo "This removes local generated files and reruns setup.\n";
+        echo "Run bin/console reset --yes [project-name] to continue.\n";
+
+        return 1;
+    }
+
+    if (commandExists('ddev')) {
+        runProcess(['ddev', 'stop']);
+    }
+
+    foreach (
+        [
+            'public',
+            'vendor',
+            'var',
+            '.env.cached.php',
+            'wp-cli.yml',
+            '.phpunit.cache',
+        ] as $path
+    ) {
+        removePath($projectDir . '/' . $path);
+    }
+
+    return starterSetup($projectDir, $projectName === null ? [] : [$projectName]);
+}
+
+function checkCommand(string $command): bool
+{
+    if (commandExists($command)) {
+        echo "[OK] {$command} found\n";
+
+        return true;
+    }
+
+    echo "[ERROR] {$command} not found\n";
+
+    return false;
+}
+
+function ensureCommand(string $command, string $message): bool
+{
+    if (commandExists($command)) {
+        return true;
+    }
+
+    fwrite(STDERR, "{$message}\n");
+
+    return false;
+}
+
+function commandExists(string $command): bool
+{
+    exec('command -v ' . escapeshellarg($command) . ' >/dev/null 2>&1', $output, $exitCode);
+
+    return $exitCode === 0;
+}
+
+function checkFile(string $path, string $label): void
+{
+    if (file_exists($path)) {
+        echo "[OK] {$label} exists\n";
+
+        return;
+    }
+
+    echo "[WARN] {$label} does not exist\n";
+}
+
+/**
+ * @param list<string> $command
+ */
+function runProcess(array $command): int
+{
+    $commandLine = implode(' ', array_map('escapeshellarg', $command));
+
+    passthru($commandLine, $exitCode);
+
+    return is_int($exitCode) ? $exitCode : 1;
+}
+
+function readEnvValue(string $envFile, string $key): string
+{
+    if (!is_file($envFile)) {
+        return '';
+    }
+
+    foreach (file($envFile, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+        if (str_starts_with($line, "{$key}=")) {
+            return substr($line, strlen($key) + 1);
+        }
+    }
+
+    return '';
+}
+
+function resolveProjectName(string $projectDir, string $projectName): string
+{
+    if ($projectName !== '') {
+        return normalizeProjectName($projectName);
+    }
+
+    $envProjectName = getenv('DDEV_PROJECT_NAME') ?: '';
+
+    if ($envProjectName !== '') {
+        return normalizeProjectName($envProjectName);
+    }
+
+    return normalizeProjectName(basename($projectDir));
+}
+
+function normalizeProjectName(string $projectName): string
+{
+    $normalized = strtolower($projectName);
+    $normalized = preg_replace('/[^a-z0-9-]+/', '-', $normalized) ?: '';
+    $normalized = trim($normalized, '-');
+
+    return $normalized;
+}
+
+/**
+ * @param array<string, string> $values
+ */
+function updateEnvValues(string $envFile, array $values): void
+{
+    $lines = is_file($envFile) ? (file($envFile, FILE_IGNORE_NEW_LINES) ?: []) : [];
+    $seen = [];
+
+    foreach ($lines as $index => $line) {
+        foreach ($values as $key => $value) {
+            if (str_starts_with($line, "{$key}=")) {
+                $lines[$index] = "{$key}={$value}";
+                $seen[$key] = true;
+            }
+        }
+    }
+
+    foreach ($values as $key => $value) {
+        if (!isset($seen[$key])) {
+            $lines[] = "{$key}={$value}";
+        }
+    }
+
+    file_put_contents($envFile, implode("\n", $lines) . "\n");
+}
+
+function pathIsAbsolute(string $path): bool
+{
+    return str_starts_with($path, '/') || preg_match('/^[A-Za-z]:[\/\\\\]/', $path) === 1;
+}
+
+function generatePassword(): string
+{
+    return bin2hex(random_bytes(16));
+}
+
+function removePath(string $path): void
+{
+    if (!file_exists($path) && !is_link($path)) {
+        return;
+    }
+
+    if (is_file($path) || is_link($path)) {
+        @unlink($path);
+
+        return;
+    }
+
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST,
+    );
+
+    foreach ($iterator as $item) {
+        if ($item->isDir() && !$item->isLink()) {
+            @rmdir($item->getPathname());
+            continue;
+        }
+
+        @unlink($item->getPathname());
+    }
+
+    @rmdir($path);
+}

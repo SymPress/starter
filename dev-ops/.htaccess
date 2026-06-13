@@ -1,0 +1,34 @@
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	RewriteBase /
+	RewriteRule ^index\.php$ - [L]
+
+	#RewriteCond %{HTTPS} off
+    #RewriteRule (.*) https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+
+	# uploaded files
+	#RewriteRule ^([_0-9a-zA-Z-]+/)?files/(.+) wp/wp-includes/ms-files.php?file=$2 [L]
+
+	# add a trailing slash to /wp-admin
+	RewriteRule ^(?:([_0-9a-zA-Z-]+)/)?wp-admin$ $1/wp-admin/ [R=301,L]
+
+	#Options -Indexes +SymLinksIfOwnerMatch
+
+	RewriteCond %{ENV:REDIRECT_STATUS} 200 [OR]
+	RewriteCond %{REQUEST_FILENAME} -f [OR]
+	RewriteCond %{REQUEST_FILENAME} -d
+	RewriteRule ^ - [L]
+	RewriteRule ^(?:(?:[_0-9a-zA-Z-]+)/)?(wp-(admin|includes).*) wp/$1 [L]
+	RewriteRule ^(?:(?:[_0-9a-zA-Z-]+)/)?(.*\.php)$ wp/$1 [L]
+	RewriteRule ^[_0-9a-zA-Z-]+/wp-content/(.*) wp-content/$1 [L]
+	RewriteRule . index.php [L]
+
+	##
+    # For local dev systems: redirect Attachment urls to the production system
+    ##
+#    RedirectMatch 302 "(/(?:[^/]*/)?)wp-content/(.*)\.(png|jpe?g)$" "https://domain.wpkunden.de$1wp-content/$2.$3"
+#    RedirectMatch 302 "(/(?:[^/]*/)?)files/(.*)\.(png|jpe?g)$" "https://domain.wpkunden.de$1files/$2.$3"
+</IfModule>
+
+# END WordPress

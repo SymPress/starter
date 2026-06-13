@@ -1,0 +1,18 @@
+type: php
+docroot: public
+php_version: "8.5"
+webserver_type: nginx-fpm
+xdebug_enabled: false
+additional_hostnames: []
+additional_fqdns: []
+database:
+    type: mariadb
+    version: "11.8"
+upload_dirs:
+    - wp-content/uploads
+use_dns_when_possible: true
+project_tld: ddev.site
+composer_version: "2"
+web_environment:
+    - NO_COLOR=
+corepack_enable: false
