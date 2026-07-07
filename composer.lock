@@ -9523,22 +9523,22 @@
         },
         {
             "name": "sympress/coding-standards",
-            "version": "1.0.1",
+            "version": "1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/coding-standards.git",
-                "reference": "03d9269e64b993b8fc1a0c61ecc7d044ecf3e004"
+                "reference": "6692a951b79db743646ec4074496591797fcc2f3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/coding-standards/zipball/03d9269e64b993b8fc1a0c61ecc7d044ecf3e004",
-                "reference": "03d9269e64b993b8fc1a0c61ecc7d044ecf3e004",
+                "url": "https://api.github.com/repos/SymPress/coding-standards/zipball/6692a951b79db743646ec4074496591797fcc2f3",
+                "reference": "6692a951b79db743646ec4074496591797fcc2f3",
                 "shasum": ""
             },
             "require": {
                 "automattic/vipwpcs": "^3.0",
                 "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
-                "php": ">=8.4 <9.0",
+                "php": "^8.5",
                 "phpcompatibility/php-compatibility": "^9.3 || ^10.0@alpha",
                 "phpcsstandards/phpcsextra": "^1.2",
                 "phpcsstandards/phpcsutils": "^1.0",
@@ -9587,9 +9587,9 @@
             ],
             "support": {
                 "issues": "https://github.com/SymPress/coding-standards/issues",
-                "source": "https://github.com/SymPress/coding-standards/tree/1.0.1"
+                "source": "https://github.com/SymPress/coding-standards/tree/1.1.0"
             },
-            "time": "2026-06-10T17:21:56+00:00"
+            "time": "2026-06-19T02:08:28+00:00"
         },
         {
             "name": "sympress/profiler",
