@@ -16,7 +16,7 @@ if (!defined('ABSPATH')) {
 }
 
 if (!class_exists(App::class)) {
-    require_once __DIR__ . '/vendor/autoload.php';
+    require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
 }
 
 App::bootKernel(new SiteKernel(dirname(__DIR__, 2)));
