@@ -67,4 +67,54 @@ final class TemplateHygieneTest extends TestCase
         self::assertStringNotContainsString('WP_ADMIN_PASSWORD=admin', $envExample);
         self::assertStringContainsString('WP_ADMIN_PASSWORD=', $envExample);
     }
+
+    public function testCliManifestMatchesTheStarterContract(): void
+    {
+        $composer = json_decode(
+            (string) file_get_contents($this->projectDir . '/composer.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+        $manifest = json_decode(
+            (string) file_get_contents($this->projectDir . '/.sympress/cli.json'),
+            true,
+            flags: JSON_THROW_ON_ERROR,
+        );
+
+        self::assertSame(
+            'https://raw.githubusercontent.com/sympress/cli/main/schema/repository-manifest.schema.json',
+            $manifest['$schema'],
+        );
+        self::assertSame(1, $manifest['schemaVersion']);
+        self::assertSame('dev', $composer['minimum-stability'] ?? null);
+        self::assertTrue($composer['prefer-stable'] ?? false);
+        self::assertSame($composer['name'], $manifest['templates'][0]['packageName']);
+        self::assertSame(['bin/console', 'setup', '{project_slug}'], $manifest['templates'][0]['setupCommand']);
+        $profileIds = array_column($manifest['profiles'], 'id');
+        self::assertSame(
+            ['website', 'app', 'microservice', 'commerce'],
+            array_values(array_unique($profileIds)),
+        );
+
+        $suggestionNames = array_column($manifest['packageSuggestions'], 'name');
+        self::assertSame($suggestionNames, array_values(array_unique($suggestionNames)));
+        self::assertNotContains('sympress/consent', $suggestionNames);
+
+        $suggestions = array_column($manifest['packageSuggestions'], null, 'name');
+        foreach (['sympress/mailer', 'sympress/nginx-cache'] as $unpublishedPackage) {
+            self::assertSame('dev-main', $suggestions[$unpublishedPackage]['constraint'] ?? null);
+            self::assertSame(
+                'https://github.com/SymPress/' . substr($unpublishedPackage, strlen('sympress/')),
+                $suggestions[$unpublishedPackage]['repositoryUrl'] ?? null,
+            );
+        }
+
+        foreach ($manifest['packageSuggestions'] as $suggestion) {
+            $suggestedProfiles = array_merge(
+                $suggestion['recommendedProfiles'] ?? [],
+                $suggestion['optionalProfiles'] ?? [],
+            );
+            self::assertSame([], array_values(array_diff($suggestedProfiles, $profileIds)));
+        }
+    }
 }

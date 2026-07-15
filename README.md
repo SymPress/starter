@@ -22,6 +22,17 @@ Project dependencies are installed inside DDEV. Host PHP/Composer are only neede
 
 ## Creating Projects
 
+The recommended project creation path is the standalone SymPress CLI. The CLI
+discovers this starter's `.sympress/cli.json` manifest automatically, so project
+types, setup commands and package suggestions can evolve with this repository:
+
+```sh
+sympress new my-project
+```
+
+Use `--manifest=https://github.com/SymPress/starter` when you want to pin or test
+manifest discovery explicitly.
+
 Create a new SymPress website project:
 
 ```sh
@@ -138,6 +149,7 @@ bin/console diagnose-login --env-file=.env.example
 ├── config/                    SymPress and WordPress configuration
 ├── dev-ops/                   WPStarter and server support files
 ├── packages/base-mu-plugins/  Starter MU plugin package
+├── .sympress/cli.json         SymPress CLI project creation/update manifest
 ├── public/                    Generated WordPress webroot, ignored by Git
 ├── composer.json              Root project dependencies
 └── README.md

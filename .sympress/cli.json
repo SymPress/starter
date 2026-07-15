@@ -1,0 +1,212 @@
+{
+  "$schema": "https://raw.githubusercontent.com/sympress/cli/main/schema/repository-manifest.schema.json",
+  "schemaVersion": 1,
+  "templates": [
+    {
+      "id": "sympress-starter",
+      "label": "SymPress Starter",
+      "packageName": "sympress/starter",
+      "repositoryUrl": "https://github.com/SymPress/starter",
+      "description": "DDEV-ready SymPress WordPress starter with WPStarter, Composer-managed WordPress, SymPress kernel, WP-CLI console and quality tooling.",
+      "defaultVersion": "1.0.x-dev",
+      "setupCommand": [
+        "bin/console",
+        "setup",
+        "{project_slug}"
+      ]
+    }
+  ],
+  "profiles": [
+    {
+      "id": "website",
+      "label": "Website",
+      "description": "Public WordPress site with editorial content, SEO, forms, caching, consent and asset tooling.",
+      "exampleName": "acme-website"
+    },
+    {
+      "id": "app",
+      "label": "App / Portal",
+      "description": "Authenticated WordPress-backed application with custom data, events, mail and admin workflows.",
+      "exampleName": "customer-portal"
+    },
+    {
+      "id": "microservice",
+      "label": "Microservice",
+      "description": "Lean service-style WordPress/SymPress boundary with events, migrations and operational tooling.",
+      "exampleName": "content-sync-service"
+    },
+    {
+      "id": "commerce",
+      "label": "Commerce",
+      "description": "WooCommerce-oriented project with cache, forms, mail and operational visibility.",
+      "exampleName": "shop-platform"
+    }
+  ],
+  "packageSuggestions": [
+    {
+      "name": "sympress/assets",
+      "label": "Assets",
+      "description": "Asset registration and output filtering for themes, plugins and app screens.",
+      "recommendedProfiles": [
+        "website",
+        "app",
+        "commerce"
+      ],
+      "optionalProfiles": [
+        "microservice"
+      ]
+    },
+    {
+      "name": "sympress/asset-compiler",
+      "label": "Asset Compiler",
+      "description": "Composer-driven frontend builds for package workspaces.",
+      "recommendedProfiles": [
+        "website",
+        "app",
+        "commerce"
+      ]
+    },
+    {
+      "name": "sympress/event-dispatcher",
+      "label": "Event Dispatcher",
+      "description": "PSR/Symfony event boundaries for app and service workflows.",
+      "recommendedProfiles": [
+        "app",
+        "microservice",
+        "commerce"
+      ],
+      "optionalProfiles": [
+        "website"
+      ]
+    },
+    {
+      "name": "sympress/mailer",
+      "label": "Mailer",
+      "description": "Mail transport and templating integration for transactional messages.",
+      "constraint": "dev-main",
+      "repositoryUrl": "https://github.com/SymPress/mailer",
+      "recommendedProfiles": [
+        "app",
+        "microservice",
+        "commerce"
+      ],
+      "optionalProfiles": [
+        "website"
+      ]
+    },
+    {
+      "name": "sympress/migration",
+      "label": "Migrations",
+      "description": "Repeatable database/schema changes for custom application data.",
+      "recommendedProfiles": [
+        "app",
+        "microservice",
+        "commerce"
+      ]
+    },
+    {
+      "name": "sympress/nginx-cache",
+      "label": "Nginx Cache",
+      "description": "Cache-aware WordPress integration for nginx-backed environments.",
+      "constraint": "dev-main",
+      "repositoryUrl": "https://github.com/SymPress/nginx-cache",
+      "recommendedProfiles": [
+        "website",
+        "commerce"
+      ]
+    },
+    {
+      "name": "sympress/orm",
+      "label": "ORM",
+      "description": "Entity mapping and repositories for custom WordPress-backed data models.",
+      "recommendedProfiles": [
+        "app",
+        "microservice",
+        "commerce"
+      ],
+      "optionalProfiles": [
+        "website"
+      ]
+    },
+    {
+      "name": "sympress/profiler",
+      "label": "Profiler",
+      "description": "Development profiler for inspecting runtime, services and requests.",
+      "dev": true,
+      "recommendedProfiles": [
+        "website",
+        "app",
+        "microservice",
+        "commerce"
+      ]
+    },
+    {
+      "name": "symfony/var-dumper",
+      "label": "VarDumper",
+      "description": "Debug dumps with Symfony-friendly formatting.",
+      "dev": true,
+      "recommendedProfiles": [
+        "website",
+        "app",
+        "microservice",
+        "commerce"
+      ]
+    },
+    {
+      "name": "wpackagist-plugin/contact-form-7",
+      "label": "Contact Form 7",
+      "description": "Editorial form handling for classic website contact flows.",
+      "optionalProfiles": [
+        "website",
+        "commerce"
+      ]
+    },
+    {
+      "name": "wpackagist-plugin/performance-lab",
+      "label": "Performance Lab",
+      "description": "WordPress performance feature plugin for measurement and experiments.",
+      "optionalProfiles": [
+        "website",
+        "commerce"
+      ]
+    },
+    {
+      "name": "wpackagist-plugin/query-monitor",
+      "label": "Query Monitor",
+      "description": "Developer diagnostics for database queries, hooks, requests and template state.",
+      "dev": true,
+      "optionalProfiles": [
+        "website",
+        "app",
+        "commerce"
+      ]
+    },
+    {
+      "name": "wpackagist-plugin/safe-svg",
+      "label": "Safe SVG",
+      "description": "Safer SVG uploads for content and brand-heavy sites.",
+      "optionalProfiles": [
+        "website",
+        "app",
+        "commerce"
+      ]
+    },
+    {
+      "name": "wpackagist-plugin/seo-by-rank-math",
+      "label": "Rank Math SEO",
+      "description": "SEO metadata, redirects and editorial search controls.",
+      "optionalProfiles": [
+        "website",
+        "commerce"
+      ]
+    },
+    {
+      "name": "wpackagist-plugin/woocommerce",
+      "label": "WooCommerce",
+      "description": "Commerce foundation for catalogs, carts and orders.",
+      "recommendedProfiles": [
+        "commerce"
+      ]
+    }
+  ]
+}
