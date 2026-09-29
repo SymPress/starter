@@ -46,7 +46,7 @@ WP_SITEURL=${WP_HOME}/wp
 
 ## Installer
 
-WPStarter uses these values only when it installs WordPress on a fresh database:
+SymPress Runtime uses these values only when it installs WordPress on a fresh database:
 
 ```dotenv
 WP_ADMIN_USERNAME=admin

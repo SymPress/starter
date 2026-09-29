@@ -47,7 +47,7 @@ Run the setup from the project root:
 bin/console setup my-project
 ```
 
-`bin/console setup` configures DDEV, starts the project, and runs Composer inside DDEV. Composer triggers WPStarter. WPStarter checks the database and, on a fresh install, creates WordPress with the site title from `dev-ops/orchestrate.php`.
+`bin/console setup` configures DDEV, starts the project, and runs Composer inside DDEV. Composer triggers SymPress Runtime. SymPress Runtime checks the database and, on a fresh install, creates WordPress with the site title from `dev-ops/orchestrate.php`.
 
 Default local credentials:
 

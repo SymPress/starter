@@ -4,6 +4,8 @@
 !.env.example
 .env.cached.php
 wp-cli.yml
+/wp-cli*.phar
+/wp-config.php
 
 ### Dependencies and generated WordPress runtime
 public
@@ -25,6 +27,7 @@ var
 .ddev/apache/
 .ddev/commands/.gitattributes
 .ddev/config.local.y*ml
+.ddev/docker-compose.*.local.yaml
 .ddev/config.*.local.y*ml
 .ddev/db_snapshots/
 .ddev/homeadditions/

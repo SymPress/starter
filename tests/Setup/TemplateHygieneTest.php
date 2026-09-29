@@ -17,7 +17,7 @@ final class TemplateHygieneTest extends TestCase
 
     public function testGeneratedLocalArtifactsAreNotTracked(): void
     {
-        if (!is_dir($this->projectDir . '/.git')) {
+        if (!file_exists($this->projectDir . '/.git')) {
             self::markTestSkipped('Git metadata is not available in this project archive.');
         }
 

@@ -8,10 +8,9 @@
         "sympress/base-mu-plugins": "^1.0@dev",
         "sympress/kernel": "dev-main as 1.0.x-dev",
         "sympress/monolog-bundle": "dev-main as 1.0.x-dev",
+        "sympress/runtime": "dev-phase-6-compatibility-migration",
         "sympress/wp-cli-console": "dev-main as 1.0.x-dev",
         "johnpbloch/wordpress": "^7.0.0",
-        "wecodemore/wpstarter": "^3.0.1",
-        "wp-cli/wp-cli-bundle": "^2.12.0",
         "wpackagist-theme/twentytwentyfive": "^1.5.0"
     },
     "require-dev": {
@@ -26,7 +25,7 @@
     "extra": {
         "wordpress-install-dir": "public/wp",
         "wordpress-content-dir": "public/wp-content",
-        "wpstarter": "dev-ops/wpstarter.json",
+        "sympress-runtime": "dev-ops/runtime.json",
         "installer-paths": {
             "public/wp-content/mu-plugins/{$name}": [
                 "type:wordpress-muplugin"
@@ -70,13 +69,17 @@
             "johnpbloch/wordpress-core-installer": true,
             "composer/installers": true,
             "dealerdirect/phpcodesniffer-composer-installer": true,
-            "wecodemore/wpstarter": true,
+            "sympress/runtime": true,
             "phpstan/extension-installer": true
         }
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "repositories": [
+        {
+            "type": "git",
+            "url": "git@github.com:SymPress/runtime.git"
+        },
         {
             "type": "path",
             "url": "./packages/*",
