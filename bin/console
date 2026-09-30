@@ -161,7 +161,7 @@ function starterSetup(string $projectDir, array $args): int
         echo "DDEV_PROJECT_NAME={$projectName}\n";
         echo "DDEV_PROJECT_TLD={$projectTld}\n";
         echo "WP_HOME={$wpHome}\n";
-        echo "WP_SITEURL=\${WP_HOME}/wp\n";
+        echo "WP_SITEURL=\${WP_HOME}\n";
         echo "DDEV_CONFIG_ARGS=--project-name={$projectName} --project-tld={$projectTld} --project-type=php --docroot=public --webserver-type=nginx-fpm\n";
 
         return 0;
@@ -206,7 +206,7 @@ function starterSetup(string $projectDir, array $args): int
         $envFile,
         [
             'WP_HOME' => $wpHome,
-            'WP_SITEURL' => '${WP_HOME}/wp',
+            'WP_SITEURL' => '${WP_HOME}',
             'WP_ADMIN_PASSWORD' => $adminPassword,
         ],
     );

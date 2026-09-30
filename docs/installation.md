@@ -65,7 +65,7 @@ Update the project URL values in `.env`:
 
 ```dotenv
 WP_HOME=https://my-project.ddev.site
-WP_SITEURL=${WP_HOME}/wp
+WP_SITEURL=${WP_HOME}
 ```
 
 ## Installing Dependencies
