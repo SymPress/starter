@@ -8,7 +8,7 @@
         "sympress/base-mu-plugins": "^1.0@dev",
         "sympress/kernel": "dev-main as 1.0.x-dev",
         "sympress/monolog-bundle": "dev-main as 1.0.x-dev",
-        "sympress/runtime": "dev-main",
+        "sympress/runtime": "0.1.0",
         "sympress/wp-cli-console": "dev-main as 1.0.x-dev",
         "johnpbloch/wordpress": "^7.0.0",
         "wpackagist-theme/twentytwentyfive": "^1.5.0"
