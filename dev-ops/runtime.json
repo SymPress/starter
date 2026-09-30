@@ -6,6 +6,7 @@
     "register-theme-folder": false,
     "prevent-overwrite": [".gitignore"],
     "cache-env": true,
+    "wp-cli-version": "2.12.0",
     "content-dev-op": "copy",
     "wp-cli-commands": "dev-ops/orchestrate.php"
 }
