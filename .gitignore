@@ -6,6 +6,7 @@
 wp-cli.yml
 /wp-cli*.phar
 /wp-config.php
+/.sympress-runtime.lock.guard
 
 ### Dependencies and generated WordPress runtime
 public
