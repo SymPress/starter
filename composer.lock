@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6d862af1e791e1c5e95b037774aa10cc",
+    "content-hash": "78870420a0febd0549c88b87cfd05732",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -4908,11 +4908,11 @@
         },
         {
             "name": "sympress/runtime",
-            "version": "dev-phase-6-compatibility-migration",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "git@github.com:SymPress/runtime.git",
-                "reference": "cfc5ffd43d16b523c399176e16c6e11a13c04c28"
+                "reference": "b1c166205cd907b93a216b82b65b2d49ffec3f32"
             },
             "require": {
                 "composer-plugin-api": "^2.6",
@@ -4936,6 +4936,7 @@
             "suggest": {
                 "sympress/kernel": "Enables runtime diagnostics, validation and environment dumps through wp console."
             },
+            "default-branch": true,
             "bin": [
                 "bin/sympress-runtime"
             ],
@@ -4983,7 +4984,7 @@
                 "GPL-2.0-or-later"
             ],
             "description": "Isolated Composer project setup and WordPress runtime generation for SymPress.",
-            "time": "2026-09-29T20:58:54+00:00"
+            "time": "2026-09-30T10:12:40+00:00"
         },
         {
             "name": "sympress/wp-cli-console",
