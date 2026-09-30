@@ -2,11 +2,17 @@
 
 The project replaces WP Starter with `sympress/runtime`. Its configuration is `dev-ops/runtime.json`; compatibility is disabled and dotenv local overrides remain explicitly disabled to preserve the existing two-file convention. The command provider uses the injected environment reader and database status from Runtime preflight. The base MU package declares kernel boot ownership.
 
-The dependency follows Runtime main in its private repository; the lockfile pins merged commit `60249ee25ead52f94e2b83e9be4ce472cd3b2fcf`. All six implementation PRs and [review corrections #7](https://github.com/SymPress/runtime/pull/7) are merged. Private repository access is required through SSH or Composer GitHub authentication. WP-CLI is the independently executed, SHA512-verified root phar; removing the Composer WP-CLI bundle avoids its conflict with Symfony Process 8.1 while retaining all commands.
+The dependency pins Runtime `0.2.0` from its private repository. Follow the [Runtime 0.2.0 upgrade notes](https://github.com/SymPress/runtime/blob/v0.2.0/docs/releases/0.2.0.md) when upgrading existing projects. Standalone commands use `vendor/bin/runtime`; `bin/console` remains the public starter command surface. Private repository access is required through SSH or Composer GitHub authentication. WP-CLI is the independently executed, SHA512-verified root phar; removing the Composer WP-CLI bundle avoids its conflict with Symfony Process 8.1 while retaining all commands. Native downloads are pinned in `sympress-runtime.lock`; review and commit changes, using `--update-lock` only for intentional artifact updates.
 
 Public WordPress URLs remain at the site root: `WP_SITEURL=${WP_HOME}`. The original DDEV Nginx rules map public endpoints to the physical `public/wp` core directory. No Nginx routing changes are required by this migration. The starter setup command and documentation use the same root URL.
 
-Verification in a fresh DDEV project with a separate database:
+## Runtime 0.2.0 upgrade verification
+
+A fresh isolated DDEV project passed Composer installation, validation and audit, PHPCS, PHPStan, PHPUnit (7 tests / 49 assertions), Runtime validation and all 15 development doctor checks. WordPress core/database checks and browser smoke passed: homepage HTTP 200, root login form, authenticated root admin dashboard and no JavaScript errors. A repeated standalone setup also passed. The download lock contains the WP-CLI 2.12.0 release URL, its checksum response and the logical `wp-cli.phar` artifact; all three SHA256 pins and the executable against the official SHA512 checksum were verified.
+
+## Original migration verification
+
+The following records the original migration revision, before the 0.2.0 upgrade. Verification used a fresh DDEV project with a separate database:
 
 - Composer install and WordPress installation succeeded; direct and locked package graphs contain no `wecodemore/*` dependency.
 - QA passed: 7 tests, 49 assertions, coding standards and static analysis, including the root-URL setup regression.
@@ -20,4 +26,4 @@ Repeated Composer installation, global `composer install --no-plugins` and the s
 
 Existing uncommitted changes in the original checkout were preserved by implementing this migration in a separate Git worktree. Generated configuration, local credentials and browser sessions are not committed.
 
-The project owner approved enabling deploy keys for SymPress. A repository-scoped, read-only Runtime key now supplies `COMPOSER_SSH_KEY` to the consumer workflows; `COMPOSER_SSH_KNOWN_HOSTS` pins GitHub's published host keys. The workflows are pinned to the reviewed SSH-support commit. CI must pass with that access before merge. When updating an existing environment from a previous `/wp` URL, run `vendor/bin/sympress-runtime flush-env-cache` so cached values cannot retain that URL.
+The project owner approved enabling deploy keys for SymPress. A repository-scoped, read-only Runtime key now supplies `COMPOSER_SSH_KEY` to the consumer workflows; `COMPOSER_SSH_KNOWN_HOSTS` pins GitHub's published host keys. The workflows are pinned to the reviewed SSH-support commit. CI must pass with that access before merge. When updating an existing environment from a previous `/wp` URL, run `vendor/bin/runtime flush-env-cache` so cached values cannot retain that URL.
