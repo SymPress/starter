@@ -4912,7 +4912,7 @@
             "source": {
                 "type": "git",
                 "url": "git@github.com:SymPress/runtime.git",
-                "reference": "b1c166205cd907b93a216b82b65b2d49ffec3f32"
+                "reference": "60249ee25ead52f94e2b83e9be4ce472cd3b2fcf"
             },
             "require": {
                 "composer-plugin-api": "^2.6",
@@ -4984,7 +4984,7 @@
                 "GPL-2.0-or-later"
             ],
             "description": "Isolated Composer project setup and WordPress runtime generation for SymPress.",
-            "time": "2026-09-30T10:12:40+00:00"
+            "time": "2026-09-30T10:51:29+00:00"
         },
         {
             "name": "sympress/wp-cli-console",
