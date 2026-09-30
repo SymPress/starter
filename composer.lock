@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "160be684dd7fa0c6c45025e1cde4e07a",
+    "content-hash": "83923fcf52c182abeeedf36e0a766ab1",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -4908,16 +4908,16 @@
         },
         {
             "name": "sympress/runtime",
-            "version": "v1.0.0-rc.1",
+            "version": "v1.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/runtime.git",
-                "reference": "b532fdc06c3e46b1f7b10a99557814b283d5018d"
+                "reference": "56b89a0958d24d6ae62944c0dca9e205d9fb63d5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/runtime/zipball/b532fdc06c3e46b1f7b10a99557814b283d5018d",
-                "reference": "b532fdc06c3e46b1f7b10a99557814b283d5018d",
+                "url": "https://api.github.com/repos/SymPress/runtime/zipball/56b89a0958d24d6ae62944c0dca9e205d9fb63d5",
+                "reference": "56b89a0958d24d6ae62944c0dca9e205d9fb63d5",
                 "shasum": ""
             },
             "require": {
@@ -4979,7 +4979,7 @@
                 "issues": "https://github.com/SymPress/runtime/issues",
                 "source": "https://github.com/SymPress/runtime"
             },
-            "time": "2026-09-30T18:53:50+00:00"
+            "time": "2026-09-30T19:28:57+00:00"
         },
         {
             "name": "sympress/wp-cli-console",
@@ -8062,7 +8062,6 @@
         "sympress/kernel": 20,
         "sympress/monolog-bundle": 20,
         "sympress/profiler": 20,
-        "sympress/runtime": 5,
         "sympress/wp-cli-console": 20
     },
     "prefer-stable": true,
