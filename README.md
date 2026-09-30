@@ -8,7 +8,7 @@ Composer project starter and GitHub template for new WordPress websites in the S
 - SymPress kernel, Monolog bundle, WP-CLI console, and optional profiler
 - Base MU plugins in `packages/base-mu-plugins`
 - DDEV configuration for PHP 8.5, MariaDB 11.8, and nginx-fpm
-- WPStarter orchestration for first install and repeatable local setup
+- SymPress Runtime orchestration for first install and repeatable local setup
 - PHPCS, PHPStan, PHPUnit, Composer audit, Dependabot/Renovate, and DDEV smoke-test wiring
 
 ## Requirements
@@ -78,12 +78,12 @@ ddev start
 ddev composer install
 ```
 
-WPStarter runs through Composer and creates the generated WordPress files/configuration. On a fresh database it installs WordPress with these development credentials unless overridden via environment variables:
+SymPress Runtime runs through Composer and creates the generated WordPress files/configuration. On a fresh database it installs WordPress with these development credentials unless overridden via environment variables:
 
 - Username: `admin`
 - Password: generated during `bin/console setup` or set through `WP_ADMIN_PASSWORD`
 
-WPStarter is intentionally part of the Composer install/update flow because it installs, syncs, and regenerates the WordPress project files and plugin/theme layout.
+SymPress Runtime is intentionally part of the Composer install/update flow because it installs, syncs, and regenerates the WordPress project files and plugin/theme layout.
 
 Open the site:
 
@@ -147,7 +147,7 @@ bin/console diagnose-login --env-file=.env.example
 ├── .ddev/                     DDEV local environment
 ├── bin/console                Single starter command surface
 ├── config/                    SymPress and WordPress configuration
-├── dev-ops/                   WPStarter and server support files
+├── dev-ops/                   SymPress Runtime and server support files
 ├── packages/base-mu-plugins/  Starter MU plugin package
 ├── .sympress/cli.json         SymPress CLI project creation/update manifest
 ├── public/                    Generated WordPress webroot, ignored by Git

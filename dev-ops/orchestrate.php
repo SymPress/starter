@@ -2,7 +2,8 @@
 
 declare(strict_types=1);
 
-namespace WeCodeMore\WpStarter;
+use SymPress\Runtime\Database\DbChecker;
+use SymPress\Runtime\Services;
 
 $config = (object) [
     'title' => 'SymPress Starter',
@@ -10,22 +11,23 @@ $config = (object) [
 
 $shellArg = static fn (string $value): string => \escapeshellarg($value);
 
-$env = new Env\WordPressEnvBridge();
+/** @var Services $services */
+$env = $services->env();
 
 // If env configuration is invalid nothing to do.
-if (!$env->read(Util\DbChecker::WPDB_ENV_VALID)) {
+if (!$env->read(DbChecker::WPDB_ENV_VALID)) {
     return ['wp --version'];
 }
 
 // If WP already installed, let's just tell WP Cli to check it.
-if ($env->read(Util\DbChecker::WP_INSTALLED)) {
+if ($env->read(DbChecker::WP_INSTALLED)) {
     return ['wp db check'];
 }
 
 $commands = [];
 
 // If DB does not exist, let's tell WP Cli to create it.
-if (!$env->read(Util\DbChecker::WPDB_EXISTS)) {
+if (!$env->read(DbChecker::WPDB_EXISTS)) {
     $commands[] = 'wp db create';
 }
 

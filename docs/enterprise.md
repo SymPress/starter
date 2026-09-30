@@ -100,7 +100,7 @@ SYMPRESS_ENABLE_VARDUMPER=false
 
 ## Starter Operations
 
-Keep WPStarter enabled for Composer install and update. It is part of the project generation flow and keeps Composer-managed WordPress files, packages, plugins, and themes synchronized.
+Keep SymPress Runtime enabled for Composer install and update. It is part of the project generation flow and keeps Composer-managed WordPress files, packages, plugins, and themes synchronized.
 
 Before a production release, run:
 

@@ -88,7 +88,7 @@ function runStarterCommand(string $commandName, array $args, string $projectDir)
         'setup', 'starter:setup' => starterSetup($projectDir, $args),
         'diagnose-login', 'starter:diagnose-login' => starterDiagnoseLogin($projectDir, $args),
         'check', 'starter:check' => starterCheck($projectDir),
-        'doctor', 'starter:doctor' => starterDoctor($projectDir),
+        'doctor', 'starter:doctor' => starterDoctor($projectDir, $args),
         'perf', 'starter:perf' => starterPerf($projectDir, $args),
         'reset', 'starter:reset' => starterReset($projectDir, $args),
         default => 1,
@@ -107,7 +107,7 @@ function showStarterHelp(): void
     echo "SymPress Starter commands:\n";
     echo "  bin/console setup [project-name]\n";
     echo "  bin/console check\n";
-    echo "  bin/console doctor\n";
+    echo "  bin/console doctor [--json]\n";
     echo "  bin/console diagnose-login [--env-file=.env]\n";
     echo "  bin/console perf [env-file]\n";
     echo "  bin/console reset --yes [project-name]\n";
@@ -161,7 +161,7 @@ function starterSetup(string $projectDir, array $args): int
         echo "DDEV_PROJECT_NAME={$projectName}\n";
         echo "DDEV_PROJECT_TLD={$projectTld}\n";
         echo "WP_HOME={$wpHome}\n";
-        echo "WP_SITEURL=\${WP_HOME}/wp\n";
+        echo "WP_SITEURL=\${WP_HOME}\n";
         echo "DDEV_CONFIG_ARGS=--project-name={$projectName} --project-tld={$projectTld} --project-type=php --docroot=public --webserver-type=nginx-fpm\n";
 
         return 0;
@@ -206,7 +206,7 @@ function starterSetup(string $projectDir, array $args): int
         $envFile,
         [
             'WP_HOME' => $wpHome,
-            'WP_SITEURL' => '${WP_HOME}/wp',
+            'WP_SITEURL' => '${WP_HOME}',
             'WP_ADMIN_PASSWORD' => $adminPassword,
         ],
     );
@@ -334,6 +334,7 @@ function starterCheck(string $projectDir): int
             ['ddev', 'composer', 'validate', '--no-check-publish'],
             ['ddev', 'composer', 'audit', '--locked', '--no-interaction'],
             ['ddev', 'composer', 'qa'],
+            ['ddev', 'exec', 'php', 'vendor/bin/sympress-runtime', 'check'],
             ['ddev', 'exec', 'wp', '--info'],
             ['ddev', 'exec', 'wp', 'core', 'is-installed'],
             ['ddev', 'exec', 'wp', 'db', 'check'],
@@ -359,8 +360,19 @@ function starterCheck(string $projectDir): int
     return 0;
 }
 
-function starterDoctor(string $projectDir): int
+/** @param list<string> $args */
+function starterDoctor(string $projectDir, array $args): int
 {
+    foreach ($args as $arg) {
+        if ($arg !== '--json') {
+            fwrite(STDERR, "Unknown doctor option: {$arg}\n");
+
+            return 1;
+        }
+    }
+    if (in_array('--json', $args, true)) {
+        return runtimeDoctor($projectDir, $args);
+    }
     $status = 0;
 
     $status = checkCommand('ddev') ? $status : 1;
@@ -370,7 +382,7 @@ function starterDoctor(string $projectDir): int
     checkFile($projectDir . '/.env.example', '.env.example');
     checkFile($projectDir . '/composer.json', 'composer.json');
     checkFile($projectDir . '/.ddev/config.yaml', '.ddev/config.yaml');
-    checkFile($projectDir . '/dev-ops/wpstarter.json', 'dev-ops/wpstarter.json');
+    checkFile($projectDir . '/dev-ops/runtime.json', 'dev-ops/runtime.json');
     checkFile($projectDir . '/dev-ops/orchestrate.php', 'dev-ops/orchestrate.php');
 
     $ddevConfig = $projectDir . '/.ddev/config.yaml';
@@ -406,14 +418,36 @@ function starterDoctor(string $projectDir): int
         ? json_decode((string) file_get_contents($composerFile), true)
         : [];
 
-    if (($composer['config']['allow-plugins']['wecodemore/wpstarter'] ?? false) === true) {
-        echo "[OK] WPStarter Composer plugin is allowed\n";
+    if (($composer['config']['allow-plugins']['sympress/runtime'] ?? false) === true) {
+        echo "[OK] SymPress Runtime Composer plugin is allowed\n";
     } else {
-        echo "[ERROR] WPStarter Composer plugin is not allowed in composer.json\n";
+        echo "[ERROR] SymPress Runtime Composer plugin is not allowed in composer.json\n";
         $status = 1;
     }
 
+    if (is_file($projectDir . '/vendor/bin/sympress-runtime')) {
+        $runtimeStatus = runtimeDoctor($projectDir, []);
+
+        return $status !== 0 ? $status : $runtimeStatus;
+    }
+
     return $status;
+}
+
+/** @param list<string> $args */
+function runtimeDoctor(string $projectDir, array $args): int
+{
+    if (!is_file($projectDir . '/vendor/bin/sympress-runtime')) {
+        fwrite(STDERR, "Runtime is not installed. Run bin/console setup first.\n");
+
+        return 1;
+    }
+    $command = ['php', 'vendor/bin/sympress-runtime', 'doctor', ...$args];
+    if (getenv('IS_DDEV_PROJECT') !== 'true' && commandExists('ddev')) {
+        $command = ['ddev', 'exec', ...$command];
+    }
+
+    return runProcess($command);
 }
 
 /**

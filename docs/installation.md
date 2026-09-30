@@ -1,5 +1,7 @@
 # Installing SymPress Starter
 
+This migration review branch requires SSH access to the private `git@github.com:SymPress/runtime.git` repository (`ddev auth ssh` for DDEV). `sympress/runtime` is locked to `dev-phase-6-compatibility-migration`; retarget it to the accepted main branch or release after the Runtime PR stack is merged. WP-CLI runs from the SHA512-verified root `wp-cli.phar` because the Composer WP-CLI bundle conflicts with Symfony 8.1 Process.
+
 This guide follows the same idea as Symfony's `composer create-project` workflow: Composer creates the project directory, then the local runtime installs and boots the application.
 
 ## Technical Requirements
@@ -63,7 +65,7 @@ Update the project URL values in `.env`:
 
 ```dotenv
 WP_HOME=https://my-project.ddev.site
-WP_SITEURL=${WP_HOME}/wp
+WP_SITEURL=${WP_HOME}
 ```
 
 ## Installing Dependencies
@@ -75,7 +77,7 @@ ddev start
 ddev composer install
 ```
 
-Composer triggers WPStarter during install and update. This is intentional: WPStarter creates and syncs the generated WordPress files, writes the local WordPress configuration, and installs WordPress on a fresh database.
+Composer triggers SymPress Runtime during install and update. This is intentional: SymPress Runtime creates and syncs the generated WordPress files, writes the local WordPress configuration, and installs WordPress on a fresh database.
 
 Default local admin credentials:
 

@@ -39,14 +39,14 @@ Production values should come from the deployment platform or secret manager.
 
 ```dotenv
 WP_HOME=https://my-project.ddev.site
-WP_SITEURL=${WP_HOME}/wp
+WP_SITEURL=${WP_HOME}
 ```
 
-`WP_HOME` is the public site URL. `WP_SITEURL` points to the Composer-managed WordPress core in `/wp`.
+`WP_HOME` and `WP_SITEURL` use the public root URL. The web server maps WordPress endpoints to the Composer-managed core under `public/wp`; its physical directory does not change public URLs.
 
 ## Installer
 
-WPStarter uses these values only when it installs WordPress on a fresh database:
+SymPress Runtime uses these values only when it installs WordPress on a fresh database:
 
 ```dotenv
 WP_ADMIN_USERNAME=admin

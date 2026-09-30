@@ -55,6 +55,9 @@
         "sort-packages": true
     },
     "extra": {
+        "sympress-runtime": {
+            "boots-kernel": true
+        },
         "branch-alias": {
             "dev-main": "1.0.x-dev"
         }

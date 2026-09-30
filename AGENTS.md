@@ -27,7 +27,7 @@ ddev composer qa
 ```
 
 Use the matching focused scripts (`cs`, `static-analysis`, `test`) while iterating.
-Changes to setup, Composer/WPStarter wiring, DDEV, database or HTTP behavior also
+Changes to setup, Composer/SymPress Runtime wiring, DDEV, database or HTTP behavior also
 require the DDEV Smoke workflow or an equivalent fresh local setup. Commands in
 `bin/console` must continue to work before `vendor/autoload.php` exists.
 
@@ -37,7 +37,7 @@ require the DDEV Smoke workflow or an equivalent fresh local setup. Commands in
 - `.sympress/cli.json` must match the starter package, setup command and supported
   project profiles; update it with starter behavior.
 - Never restore a shared default admin password. Setup generates or accepts one.
-- Keep WordPress core/content locations aligned across Composer, WPStarter and DDEV.
+- Keep WordPress core/content locations aligned across Composer, SymPress Runtime and DDEV.
 - Extract behavior to a package only after more than one real consumer needs it.
 
 ## Definition of done

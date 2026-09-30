@@ -1,4 +1,7 @@
 {
+    "compatibility": false,
+    "compatibility-profile": "native",
+    "env-local-overrides": false,
     "env-example": false,
     "register-theme-folder": false,
     "prevent-overwrite": [".gitignore"],
