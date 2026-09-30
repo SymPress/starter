@@ -12,10 +12,12 @@ permissions:
 
 jobs:
   qa:
-    uses: sympress/workflows/.github/workflows/sympress-qa.yml@v1
+    uses: sympress/workflows/.github/workflows/sympress-qa.yml@b68ed03c15db6d2fac85d8345bc22a6229b4f4b2
     with:
       include_root: true
       package_glob: .github/no-composer-packages/*
       php_version: '8.5'
     secrets:
+      SSH_KEY: ${{ secrets.COMPOSER_SSH_KEY }}
+      SSH_KNOWN_HOSTS: ${{ secrets.COMPOSER_SSH_KNOWN_HOSTS }}
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
