@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "966c9b450d0b868738028fa9caedd908",
+    "content-hash": "160be684dd7fa0c6c45025e1cde4e07a",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -4908,15 +4908,21 @@
         },
         {
             "name": "sympress/runtime",
-            "version": "v0.2.0",
+            "version": "v1.0.0-rc.1",
             "source": {
                 "type": "git",
-                "url": "git@github.com:SymPress/runtime.git",
-                "reference": "c7326255c23e6fd00149f4ccfd03498e35306ba3"
+                "url": "https://github.com/SymPress/runtime.git",
+                "reference": "b532fdc06c3e46b1f7b10a99557814b283d5018d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/SymPress/runtime/zipball/b532fdc06c3e46b1f7b10a99557814b283d5018d",
+                "reference": "b532fdc06c3e46b1f7b10a99557814b283d5018d",
+                "shasum": ""
             },
             "require": {
                 "composer-plugin-api": "^2.6",
-                "composer/composer": "~2.10.3",
+                "composer/composer": "^2.10.3",
                 "composer/semver": "^3.4",
                 "opis/json-schema": "^2.6",
                 "php": "^8.5",
@@ -4928,10 +4934,13 @@
                 "symfony/http-client": "^8.1",
                 "symfony/process": "^8.1"
             },
+            "conflict": {
+                "symfony/event-dispatcher-contracts": "<3.4.2"
+            },
             "require-dev": {
                 "phpunit/phpunit": "^13.0",
-                "sympress/kernel": "dev-main",
-                "sympress/qa": "dev-main"
+                "sympress/kernel": "^1.1.0",
+                "sympress/qa": "^0.1.0"
             },
             "suggest": {
                 "sympress/kernel": "Enables runtime diagnostics, validation and environment dumps through wp console."
@@ -4943,8 +4952,8 @@
             "extra": {
                 "class": "SymPress\\Runtime\\Composer\\Plugin",
                 "kernel": {
-                    "bundle": "SymPress\\Runtime\\Bridge\\Kernel\\RuntimeBundle",
-                    "entry": "sympress/runtime"
+                    "entry": "sympress/runtime",
+                    "bundle": "SymPress\\Runtime\\Bridge\\Kernel\\RuntimeBundle"
                 }
             },
             "autoload": {
@@ -4952,55 +4961,7 @@
                     "SymPress\\Runtime\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "SymPress\\Runtime\\Tests\\": "tests/"
-                }
-            },
-            "archive": {
-                "exclude": [
-                    "/.github",
-                    "/docs/maintainers",
-                    "/tests",
-                    "/tools",
-                    "/AGENTS.md",
-                    "/phpcs.xml.dist",
-                    "/phpstan.neon.dist",
-                    "/phpunit.xml.dist",
-                    "/vendor",
-                    "/build",
-                    "/composer.lock",
-                    "/.phpunit.cache",
-                    "/.phpstan.cache",
-                    "/.subversion",
-                    "/.env",
-                    "/.env.*",
-                    "/.gitignore",
-                    "/.gitattributes"
-                ]
-            },
-            "scripts": {
-                "cs": [
-                    "qa cs --strict"
-                ],
-                "cs:fix": [
-                    "qa cs:fix --strict"
-                ],
-                "static-analysis": [
-                    "qa static-analysis --strict"
-                ],
-                "tests": [
-                    "qa tests --strict"
-                ],
-                "test": [
-                    "@tests"
-                ],
-                "qa": [
-                    "@cs",
-                    "@static-analysis",
-                    "@tests"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "GPL-2.0-or-later"
             ],
@@ -5014,11 +4975,11 @@
                 "wordpress"
             ],
             "support": {
+                "docs": "https://github.com/SymPress/runtime/tree/main/docs",
                 "issues": "https://github.com/SymPress/runtime/issues",
-                "source": "https://github.com/SymPress/runtime",
-                "docs": "https://github.com/SymPress/runtime/tree/main/docs"
+                "source": "https://github.com/SymPress/runtime"
             },
-            "time": "2026-09-30T16:43:29+00:00"
+            "time": "2026-09-30T18:53:50+00:00"
         },
         {
             "name": "sympress/wp-cli-console",
@@ -8101,6 +8062,7 @@
         "sympress/kernel": 20,
         "sympress/monolog-bundle": 20,
         "sympress/profiler": 20,
+        "sympress/runtime": 5,
         "sympress/wp-cli-console": 20
     },
     "prefer-stable": true,
