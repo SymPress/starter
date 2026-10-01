@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   qa:
-    uses: sympress/workflows/.github/workflows/sympress-qa.yml@b68ed03c15db6d2fac85d8345bc22a6229b4f4b2
+    uses: sympress/workflows/.github/workflows/sympress-qa.yml@177fa0d727b278d2103052ec77c102b4a4c492a0
     with:
       include_root: true
       package_glob: .github/no-composer-packages/*
