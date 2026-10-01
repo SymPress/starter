@@ -370,7 +370,7 @@ function starterDoctor(string $projectDir): int
     checkFile($projectDir . '/.env.example', '.env.example');
     checkFile($projectDir . '/composer.json', 'composer.json');
     checkFile($projectDir . '/.ddev/config.yaml', '.ddev/config.yaml');
-    checkFile($projectDir . '/dev-ops/wpstarter.json', 'dev-ops/wpstarter.json');
+    checkFile($projectDir . '/dev-ops/runtime.json', 'dev-ops/runtime.json');
     checkFile($projectDir . '/dev-ops/orchestrate.php', 'dev-ops/orchestrate.php');
 
     $ddevConfig = $projectDir . '/.ddev/config.yaml';
@@ -406,10 +406,10 @@ function starterDoctor(string $projectDir): int
         ? json_decode((string) file_get_contents($composerFile), true)
         : [];
 
-    if (($composer['config']['allow-plugins']['wecodemore/wpstarter'] ?? false) === true) {
-        echo "[OK] WPStarter Composer plugin is allowed\n";
+    if (($composer['config']['allow-plugins']['sympress/runtime'] ?? false) === true) {
+        echo "[OK] SymPress Runtime Composer plugin is allowed\n";
     } else {
-        echo "[ERROR] WPStarter Composer plugin is not allowed in composer.json\n";
+        echo "[ERROR] SymPress Runtime Composer plugin is not allowed in composer.json\n";
         $status = 1;
     }
 

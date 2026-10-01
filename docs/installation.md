@@ -75,7 +75,7 @@ ddev start
 ddev composer install
 ```
 
-Composer triggers WPStarter during install and update. This is intentional: WPStarter creates and syncs the generated WordPress files, writes the local WordPress configuration, and installs WordPress on a fresh database.
+Composer triggers SymPress Runtime during install and update. This is intentional: SymPress Runtime creates and syncs the generated WordPress files, writes the local WordPress configuration, and installs WordPress on a fresh database.
 
 Default local admin credentials:
 

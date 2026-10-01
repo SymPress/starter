@@ -92,15 +92,73 @@ Review these values before launch:
 
 ```dotenv
 WORDPRESS_ENV=production
+DISALLOW_FILE_EDIT=true
+DISALLOW_FILE_MODS=true
+DISALLOW_UNFILTERED_HTML=true
+ALLOW_UNFILTERED_UPLOADS=false
+FORCE_SSL_ADMIN=true
 WP_DEBUG=false
 WP_DEBUG_DISPLAY=false
+WP_HTTP_BLOCK_EXTERNAL=true
+WP_ALLOW_MULTISITE=false
+MULTISITE=false
 SYMPRESS_ENABLE_WORDPRESS_HARDENING=true
 SYMPRESS_ENABLE_VARDUMPER=false
 ```
 
+With `WP_HTTP_BLOCK_EXTERNAL=true`, use a narrow `WP_ACCESSIBLE_HOSTS` allowlist
+for Wordfence and every other approved outbound integration.
+
+## Security Boundary
+
+Composer audits use the Wordfence-backed WP Sec Adv feed, so Composer-managed
+WordPress core, plugin, and theme advisories are checked alongside Packagist
+dependencies. The two upstream-unpatched, all-version findings are narrowly
+waived with reasons in `composer.json` and remain visible in audit output. For
+critical production pipelines, replace the public feed URL with a self-hosted
+WP Sec Adv instance.
+
+The direct Wordfence Intelligence v3 gate additionally inventories the files
+actually present in the release, including inactive and non-Composer plugins.
+Refresh one shared external feed cache in CI with an organization-owned
+`WORDFENCE_INTELLIGENCE_API_KEY`; never place the key in the release:
+
+```sh
+vendor/bin/sympress-security feed:update \
+  --provider=wordfence \
+  --output=/trusted/security-feeds/wordfence-v3.json
+```
+
+Production receives `SYMPRESS_WORDFENCE_FEED` pointing to that cache and may
+use `SYMPRESS_CISA_KEV` for a trusted local KEV snapshot. The default 24-hour
+Wordfence freshness policy fails closed when intelligence is unavailable.
+
+Before switching traffic to a production release, prewarm the SymPress kernel
+cache and create the integrity manifest outside the release:
+
+```sh
+vendor/bin/sympress-security manifest:create \
+  --project=. \
+  --output=/trusted/manifests/release.json
+```
+
+Then make the release, including the kernel cache, read-only for the PHP worker,
+include `dev-ops/nginx/security.conf` before the generic PHP location, and run
+the gate as that worker user:
+
+```sh
+SYMPRESS_SECURITY_MANIFEST=/trusted/manifests/release.json composer security:check
+```
+
+The gate requires production WordPress settings, rejects writable executable
+code and kernel-cache paths, and reports PHP-like files in writable upload and
+log directories. Store the expected manifest with a separate trusted verifier.
+Wordfence or an equivalent service remains responsible for the WAF, login
+protection, malware scanning, and live threat response.
+
 ## Starter Operations
 
-Keep WPStarter enabled for Composer install and update. It is part of the project generation flow and keeps Composer-managed WordPress files, packages, plugins, and themes synchronized.
+Keep SymPress Runtime enabled for Composer install and update. It is part of the project generation flow and keeps Composer-managed WordPress files, packages, plugins, and themes synchronized.
 
 Before a production release, run:
 

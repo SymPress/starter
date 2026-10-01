@@ -15,7 +15,11 @@ This creates `.env`, configures DDEV with the `ddev.site` project TLD, starts DD
 
 DDEV's `ddev.site` wildcard DNS is the default so setup should not need administrative permission for host-file changes.
 
-Composer install and update intentionally run WPStarter through the Composer plugin. WPStarter installs, syncs, and regenerates the WordPress project files and plugin/theme layout.
+Composer install and update intentionally run SymPress Runtime through the Composer plugin. SymPress Runtime installs, syncs, and regenerates the WordPress project files and plugin/theme layout.
+
+The native configuration is `dev-ops/runtime.json`. Runtime downloads the pinned
+WP-CLI PHAR and records its integrity in `sympress-runtime.lock`; retain this lock
+with the project. The PHAR and generated bootstrap files are ignored by Git.
 
 Show the available starter commands:
 
@@ -39,7 +43,7 @@ Run environment diagnostics:
 bin/console doctor
 ```
 
-Use this when a new project does not start as expected or when a template change might have affected DDEV, `.env`, or WPStarter wiring.
+Use this when a new project does not start as expected or when a template change might have affected DDEV, `.env`, or SymPress Runtime wiring.
 
 ## Login Diagnostic
 

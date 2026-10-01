@@ -42,6 +42,8 @@ bin/console check
 - Update `CHANGELOG.md`.
 - Confirm `composer validate --no-check-publish`.
 - Run `composer audit --locked`.
+- Refresh the external Wordfence v3 cache using a CI-only API key.
+- Create the external integrity manifest, seal the release, then run `composer security:check` as the production PHP worker.
 - Run `composer qa`.
 - Run the DDEV smoke test.
 - Confirm `bin/console starter:help` works without `vendor/autoload.php`.

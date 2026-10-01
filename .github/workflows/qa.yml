@@ -1,6 +1,8 @@
 name: QA
 
 on:
+  schedule:
+    - cron: '23 4 * * *'
   workflow_dispatch:
   push:
     branches:
@@ -9,6 +11,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   qa:
@@ -19,3 +22,73 @@ jobs:
       php_version: '8.5'
     secrets:
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
+
+  vulnerability-gate:
+    name: Wordfence vulnerability gate
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out project
+        uses: actions/checkout@v4
+        with:
+          path: project
+
+      - name: Check out SymPress Security
+        uses: actions/checkout@v4
+        with:
+          repository: sympress/security
+          path: security
+          token: ${{ secrets.SYMPRESS_REPOSITORY_TOKEN || github.token }}
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: curl, filter, json
+          coverage: none
+
+      - name: Install project
+        working-directory: project
+        env:
+          COMPOSER_AUTH: ${{ secrets.COMPOSER_AUTH_JSON }}
+        run: composer install --no-interaction --prefer-dist
+
+      - name: Refresh Wordfence Intelligence cache
+        working-directory: project
+        env:
+          WORDFENCE_INTELLIGENCE_API_KEY: ${{ secrets.WORDFENCE_INTELLIGENCE_API_KEY }}
+        run: |
+          test -n "$WORDFENCE_INTELLIGENCE_API_KEY"
+          vendor/bin/sympress-security feed:update --provider=wordfence --output="${{ runner.temp }}/wordfence-v3.json"
+
+      - name: Create JSON vulnerability report
+        id: vulnerability-json
+        continue-on-error: true
+        working-directory: project
+        run: vendor/bin/sympress-security vulnerability:check --project=. --feed="${{ runner.temp }}/wordfence-v3.json" --format=json > "${{ runner.temp }}/sympress-vulnerabilities.json"
+
+      - name: Create SARIF vulnerability report
+        if: always()
+        continue-on-error: true
+        working-directory: project
+        run: vendor/bin/sympress-security vulnerability:check --project=. --feed="${{ runner.temp }}/wordfence-v3.json" --format=sarif > "${{ runner.temp }}/sympress-vulnerabilities.sarif"
+
+      - name: Upload vulnerability reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sympress-vulnerability-reports
+          path: |
+            ${{ runner.temp }}/sympress-vulnerabilities.json
+            ${{ runner.temp }}/sympress-vulnerabilities.sarif
+
+      - name: Upload SARIF
+        if: always()
+        continue-on-error: true
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ runner.temp }}/sympress-vulnerabilities.sarif
+
+      - name: Enforce vulnerability gate
+        if: steps.vulnerability-json.outcome == 'failure'
+        run: exit 1

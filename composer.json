@@ -8,17 +8,17 @@
         "sympress/base-mu-plugins": "^1.0@dev",
         "sympress/kernel": "dev-main as 1.0.x-dev",
         "sympress/monolog-bundle": "dev-main as 1.0.x-dev",
+        "sympress/security": "dev-main as 1.0.x-dev",
         "sympress/wp-cli-console": "dev-main as 1.0.x-dev",
-        "johnpbloch/wordpress": "^7.0.0",
-        "wecodemore/wpstarter": "^3.0.1",
-        "wp-cli/wp-cli-bundle": "^2.12.0",
+        "roots/wordpress": "^7.1.1",
+        "sympress/runtime": "0.2.0",
         "wpackagist-theme/twentytwentyfive": "^1.5.0"
     },
     "require-dev": {
         "phpstan/extension-installer": "^1.4.3",
         "phpstan/phpstan": "^2.2.2",
         "phpunit/phpunit": "^13.2",
-        "sympress/coding-standards": "^1.0",
+        "sympress/coding-standards": "dev-main",
         "sympress/profiler": "dev-main as 1.0.x-dev",
         "symfony/var-dumper": "^8.1.0",
         "szepeviktor/phpstan-wordpress": "^2.0.3"
@@ -26,7 +26,12 @@
     "extra": {
         "wordpress-install-dir": "public/wp",
         "wordpress-content-dir": "public/wp-content",
-        "wpstarter": "dev-ops/wpstarter.json",
+        "sympress-runtime": "dev-ops/runtime.json",
+        "sympress-security": {
+            "wordfence": {
+                "max-feed-age-seconds": 86400
+            }
+        },
         "installer-paths": {
             "public/wp-content/mu-plugins/{$name}": [
                 "type:wordpress-muplugin"
@@ -44,11 +49,18 @@
     },
     "scripts": {
         "setup": "bin/console setup",
+        "qa:audit": "composer audit --locked --no-interaction",
         "cs": "vendor/bin/phpcs --standard=phpcs.xml.dist",
         "cs:fix": "vendor/bin/phpcbf --standard=phpcs.xml.dist",
         "static-analysis": "vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress",
         "test": "vendor/bin/phpunit --configuration phpunit.xml.dist",
+        "security:vulnerabilities": "sympress-security vulnerability:check --project=.",
+        "security:check": [
+            "sympress-security check --project=. --env-file=.env --runtime",
+            "@security:vulnerabilities"
+        ],
         "qa": [
+            "@qa:audit",
             "@cs",
             "@static-analysis",
             "@test"
@@ -67,16 +79,40 @@
             "php": "8.5"
         },
         "allow-plugins": {
-            "johnpbloch/wordpress-core-installer": true,
+            "roots/wordpress-core-installer": true,
             "composer/installers": true,
             "dealerdirect/phpcodesniffer-composer-installer": true,
-            "wecodemore/wpstarter": true,
+            "sympress/runtime": true,
             "phpstan/extension-installer": true
+        },
+        "policy": {
+            "advisories": {
+                "block": true,
+                "audit": "fail",
+                "ignore-id": {
+                    "CVE-2022-3590": "Wordfence marks every WordPress version affected and no patched release exists; keep outbound HTTP restricted and review this waiver regularly.",
+                    "CVE-2017-14990": "Wordfence marks every WordPress version affected and no patched release exists; production multisite signup is disabled."
+                }
+            }
         }
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "repositories": [
+        {
+            "type": "git",
+            "url": "git@github.com:SymPress/runtime.git"
+        },
+        {
+            "type": "path",
+            "url": "../security",
+            "options": {
+                "symlink": false,
+                "versions": {
+                    "sympress/security": "dev-main"
+                }
+            }
+        },
         {
             "type": "path",
             "url": "./packages/*",
@@ -90,6 +126,16 @@
         {
             "type": "composer",
             "url": "https://wpackagist.org"
+        },
+        {
+            "name": "wpsecadv",
+            "type": "composer",
+            "url": "https://repo-wpsecadv.typist.tech",
+            "only": [
+                "roots/wordpress-no-content",
+                "wpackagist-plugin/*",
+                "wpackagist-theme/*"
+            ]
         }
     ]
 }

@@ -1,4 +1,4 @@
-.PHONY: setup start stop restart check qa cs fix test audit doctor reset diagnose perf
+.PHONY: setup start stop restart check qa cs fix test audit security doctor reset diagnose perf
 
 PROJECT ?= sympress-starter
 
@@ -31,6 +31,9 @@ test:
 
 audit:
 	ddev composer audit --locked --no-interaction
+
+security:
+	ddev composer security:check
 
 doctor:
 	bin/console doctor
