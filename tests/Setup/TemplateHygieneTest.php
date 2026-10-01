@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SymPress\Starter\Tests\Setup;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Process\Process;
 
 final class TemplateHygieneTest extends TestCase
 {
@@ -17,7 +18,7 @@ final class TemplateHygieneTest extends TestCase
 
     public function testGeneratedLocalArtifactsAreNotTracked(): void
     {
-        if (!is_dir($this->projectDir . '/.git')) {
+        if (!file_exists($this->projectDir . '/.git')) {
             self::markTestSkipped('Git metadata is not available in this project archive.');
         }
 
@@ -66,6 +67,19 @@ final class TemplateHygieneTest extends TestCase
 
         self::assertStringNotContainsString('WP_ADMIN_PASSWORD=admin', $envExample);
         self::assertStringContainsString('WP_ADMIN_PASSWORD=', $envExample);
+    }
+
+    public function testSetupKeepsWordPressUrlsAtThePublicRoot(): void
+    {
+        $process = new Process(
+            [PHP_BINARY, $this->projectDir . '/bin/console', 'setup', 'root-url-test'],
+            $this->projectDir,
+            ['SYMPRESS_SETUP_DRY_RUN' => '1', 'DDEV_PROJECT_TLD' => 'ddev.site'],
+        );
+        $process->mustRun();
+
+        self::assertStringContainsString("WP_HOME=https://root-url-test.ddev.site\n", $process->getOutput());
+        self::assertStringContainsString('WP_SITEURL=${WP_HOME}' . "\n", $process->getOutput());
     }
 
     public function testCliManifestMatchesTheStarterContract(): void

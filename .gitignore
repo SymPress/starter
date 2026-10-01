@@ -28,6 +28,7 @@ var
 .ddev/apache/
 .ddev/commands/.gitattributes
 .ddev/config.local.y*ml
+.ddev/docker-compose.*.local.yaml
 .ddev/config.*.local.y*ml
 .ddev/db_snapshots/
 .ddev/homeadditions/

@@ -6,12 +6,11 @@
     "require": {
         "php": "^8.5",
         "sympress/base-mu-plugins": "^1.0@dev",
-        "sympress/kernel": "dev-main as 1.0.x-dev",
+        "sympress/kernel": "^1.1",
         "sympress/monolog-bundle": "dev-main as 1.0.x-dev",
-        "sympress/security": "dev-main as 1.0.x-dev",
         "sympress/wp-cli-console": "dev-main as 1.0.x-dev",
         "roots/wordpress": "^7.1.1",
-        "sympress/runtime": "0.2.0",
+        "sympress/runtime": "^1.1.1",
         "wpackagist-theme/twentytwentyfive": "^1.5.0"
     },
     "require-dev": {
@@ -27,11 +26,6 @@
         "wordpress-install-dir": "public/wp",
         "wordpress-content-dir": "public/wp-content",
         "sympress-runtime": "dev-ops/runtime.json",
-        "sympress-security": {
-            "wordfence": {
-                "max-feed-age-seconds": 86400
-            }
-        },
         "installer-paths": {
             "public/wp-content/mu-plugins/{$name}": [
                 "type:wordpress-muplugin"
@@ -54,11 +48,6 @@
         "cs:fix": "vendor/bin/phpcbf --standard=phpcs.xml.dist",
         "static-analysis": "vendor/bin/phpstan analyse -c phpstan.neon.dist --no-progress",
         "test": "vendor/bin/phpunit --configuration phpunit.xml.dist",
-        "security:vulnerabilities": "sympress-security vulnerability:check --project=.",
-        "security:check": [
-            "sympress-security check --project=. --env-file=.env --runtime",
-            "@security:vulnerabilities"
-        ],
         "qa": [
             "@qa:audit",
             "@cs",
@@ -99,20 +88,6 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "repositories": [
-        {
-            "type": "git",
-            "url": "git@github.com:SymPress/runtime.git"
-        },
-        {
-            "type": "path",
-            "url": "../security",
-            "options": {
-                "symlink": false,
-                "versions": {
-                    "sympress/security": "dev-main"
-                }
-            }
-        },
         {
             "type": "path",
             "url": "./packages/*",

@@ -1,5 +1,7 @@
 # Installing SymPress Starter
 
+This starter requires `sympress/runtime:^1.0` from public Packagist. The committed `composer.lock` pins stable `1.0.0`; use `composer install` to reproduce it. Runtime needs no private repository or SSH authentication. Any private packages added by your project still need their own Composer authentication. WP-CLI runs from the SHA512-verified root `wp-cli.phar` because the Composer WP-CLI bundle conflicts with Symfony 8.1 Process.
+
 This guide follows the same idea as Symfony's `composer create-project` workflow: Composer creates the project directory, then the local runtime installs and boots the application.
 
 ## Technical Requirements
@@ -63,7 +65,7 @@ Update the project URL values in `.env`:
 
 ```dotenv
 WP_HOME=https://my-project.ddev.site
-WP_SITEURL=${WP_HOME}/wp
+WP_SITEURL=${WP_HOME}
 ```
 
 ## Installing Dependencies

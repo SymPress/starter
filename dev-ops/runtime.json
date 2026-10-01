@@ -4,8 +4,10 @@
     "env-local-overrides": false,
     "env-example": false,
     "register-theme-folder": false,
-    "prevent-overwrite": [".gitignore"],
-    "cache-env": true,
+    "prevent-overwrite": [
+        ".gitignore"
+    ],
+    "cache-env": "auto",
     "content-dev-op": "copy",
     "wp-cli-version": "2.12.0",
     "wp-cli-commands": "dev-ops/orchestrate.php"
