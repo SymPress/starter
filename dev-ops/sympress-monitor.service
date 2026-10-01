@@ -1,0 +1,13 @@
+[Unit]
+Description=SymPress HTTPS, database and PHP error monitor
+After=network-online.target
+[Service]
+Type=oneshot
+User=sympress-monitor
+Group=sympress-monitor
+ExecStart=/usr/bin/python3 /usr/local/lib/sympress/operations.py --config /etc/sympress/monitor.json monitor
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/sympress-monitor

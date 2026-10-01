@@ -1,0 +1,7 @@
+{
+    "name": "sympress/starter-deployment",
+    "description": "Locked deployment tooling, separate from website runtime",
+    "license": "GPL-2.0-or-later",
+    "require": {"php": "^8.5", "deployer/deployer": "^8.0"},
+    "config": {"allow-plugins": false, "sort-packages": true}
+}

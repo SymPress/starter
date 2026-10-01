@@ -14,6 +14,8 @@
     <file>000-error-reporting.php</file>
     <file>allowed-html-tags.php</file>
     <file>app-starter.php</file>
+    <file>security-policy.php</file>
+    <file>production-health.php</file>
     <file>disable.php</file>
     <file>global-functions.php</file>
     <file>vardumper-integration.php</file>

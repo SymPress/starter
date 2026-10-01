@@ -43,7 +43,7 @@ bin/console check
 - Confirm `composer validate --no-check-publish`.
 - Run `composer audit --locked`.
 - Refresh the external Wordfence v3 cache using a CI-only API key.
-- Create the external integrity manifest, seal the release, then run `composer security:check` as the production PHP worker.
+- Run the native Runtime production doctor and real WordPress checks under the configured production identity; follow [production operations](production-operations.md).
 - Run `composer qa`.
 - Run the DDEV smoke test.
 - Confirm `bin/console starter:help` works without `vendor/autoload.php`.

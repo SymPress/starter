@@ -23,7 +23,8 @@ jobs:
         primary_url="$(ddev describe -j | jq -r '.raw.primary_url // empty')"
         test -n "$primary_url"
         perl -0pi -e "s#https://sympress-starter\\.ddev\\.site#$primary_url#g" .env
-        ddev composer install
+        ddev composer install --no-interaction
+        ddev composer runtime:setup --no-interaction
       playwright_install_command: ':'
       playwright_run_command: |
         ddev exec wp core is-installed

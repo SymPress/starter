@@ -10,5 +10,6 @@
     "cache-env": "auto",
     "content-dev-op": "copy",
     "wp-cli-version": "2.12.0",
-    "wp-cli-commands": "dev-ops/orchestrate.php"
+    "wp-cli-commands": "dev-ops/orchestrate.php",
+    "wp-cli-sha256": "ce34ddd838f7351d6759068d09793f26755463b4a4610a5a5c0a97b68220d85c"
 }

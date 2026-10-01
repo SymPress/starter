@@ -174,11 +174,17 @@ function starterSetup(string $projectDir, array $args): int
     $envFile = $projectDir . '/.env';
     $envExample = $projectDir . '/.env.example';
 
-    if (!is_file($envFile) && !copy($envExample, $envFile)) {
+    $previousMask = umask(0077);
+    $copied = is_file($envFile) || copy($envExample, $envFile);
+    umask($previousMask);
+
+    if (!$copied) {
         fwrite(STDERR, "Unable to create .env from .env.example.\n");
 
         return 1;
     }
+
+    chmod($envFile, 0600);
 
     $exitCode = runProcess(
         [
@@ -223,7 +229,7 @@ function starterSetup(string $projectDir, array $args): int
     echo "SymPress project is ready: {$wpHome}\n";
     echo "WordPress admin: {$wpHome}/wp-admin/\n";
     echo "WordPress admin username: " . (readEnvValue($envFile, 'WP_ADMIN_USERNAME') ?: 'admin') . "\n";
-    echo "WordPress admin password: {$adminPassword}\n";
+    echo "WordPress admin password is stored privately in .env.\n";
 
     return 0;
 }

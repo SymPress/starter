@@ -1,6 +1,0 @@
-services:
-  web:
-    volumes:
-      - type: bind
-        source: ../../security
-        target: /var/www/security

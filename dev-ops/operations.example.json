@@ -1,0 +1,8 @@
+{
+    "project": "/srv/sympress/current",
+    "uploads": "/srv/sympress/shared/public/wp-content/uploads",
+    "php": "/usr/bin/php8.5",
+    "age_recipient": "SELECT_BACKUP_AGE_PUBLIC_RECIPIENT",
+    "allow_production_restore": false,
+    "lock_file": "/srv/sympress/shared/var/operations.lock"
+}

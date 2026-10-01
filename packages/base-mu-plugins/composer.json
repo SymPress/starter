@@ -11,7 +11,7 @@
     ],
     "require": {
         "php": "^8.5",
-        "sympress/kernel": "dev-main"
+        "sympress/kernel": "^1.1"
     },
     "repositories": [
         {

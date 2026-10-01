@@ -1,0 +1,9 @@
+[Unit]
+Description=Check SymPress production health each minute
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=1min
+AccuracySec=10s
+Persistent=true
+[Install]
+WantedBy=timers.target

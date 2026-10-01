@@ -33,7 +33,7 @@ audit:
 	ddev composer audit --locked --no-interaction
 
 security:
-	ddev composer security:check
+	ddev composer qa:production
 
 doctor:
 	bin/console doctor

@@ -2,6 +2,10 @@
 
 declare(strict_types=1);
 
+/**
+ * Plugin Name: SymPress Optional WordPress Hardening
+ */
+
 if (!defined('ABSPATH')) {
     exit;
 }
@@ -11,7 +15,7 @@ if (!filter_var(getenv('SYMPRESS_ENABLE_WORDPRESS_HARDENING'), FILTER_VALIDATE_B
 }
 
 // Redirects all feeds to home page.
-function disable_feeds(): void
+function sympress_starter_disable_feeds(): void
 {
     wp_safe_redirect(home_url());
 
@@ -19,15 +23,15 @@ function disable_feeds(): void
 }
 
 // Disable feeds.
-add_action('do_feed', 'disable_feeds', 1);
-add_action('do_feed_rdf', 'disable_feeds', 1);
-add_action('do_feed_rss', 'disable_feeds', 1);
-add_action('do_feed_rss2', 'disable_feeds', 1);
-add_action('do_feed_atom', 'disable_feeds', 1);
+add_action('do_feed', 'sympress_starter_disable_feeds', 1);
+add_action('do_feed_rdf', 'sympress_starter_disable_feeds', 1);
+add_action('do_feed_rss', 'sympress_starter_disable_feeds', 1);
+add_action('do_feed_rss2', 'sympress_starter_disable_feeds', 1);
+add_action('do_feed_atom', 'sympress_starter_disable_feeds', 1);
 
 // Disable comments feeds.
-add_action('do_feed_rss2_comments', 'disable_feeds', 1);
-add_action('do_feed_atom_comments', 'disable_feeds', 1);
+add_action('do_feed_rss2_comments', 'sympress_starter_disable_feeds', 1);
+add_action('do_feed_atom_comments', 'sympress_starter_disable_feeds', 1);
 
 // Disable comments.
 add_filter('comments_open', '__return_false');
@@ -90,7 +94,7 @@ remove_action('wp_head', 'wp_oembed_add_host_js');
  * @param array<string, mixed> $endpoints
  * @return array<string, mixed>
  */
-function disable_rest_endpoints(array $endpoints): array
+function sympress_starter_disable_rest_endpoints(array $endpoints): array
 {
     if (!is_user_logged_in()) {
         if (isset($endpoints['/wp/v2/users'])) {
@@ -105,103 +109,106 @@ function disable_rest_endpoints(array $endpoints): array
     return $endpoints;
 }
 
-add_filter('rest_endpoints', 'disable_rest_endpoints');
+add_filter('rest_endpoints', 'sympress_starter_disable_rest_endpoints');
 
-// Remove JPEG compression.
-function remove_jpeg_compression(int $quality, string $context): int
+// Retain a practical JPEG quality for web delivery.
+function sympress_starter_remove_jpeg_compression(int $quality, string $context): int
 {
-    return 100;
+    return 82;
 }
 
-add_filter('jpeg_quality', 'remove_jpeg_compression', 10, 2);
+add_filter('jpeg_quality', 'sympress_starter_remove_jpeg_compression', 10, 2);
 
 // Update login page image link URL.
-function login_url(): string
+function sympress_starter_login_url(): string
 {
     return home_url();
 }
 
-add_filter('login_headerurl', 'login_url');
+add_filter('login_headerurl', 'sympress_starter_login_url');
 
 // Update login page link title.
-function login_title(): string
+function sympress_starter_login_title(): string
 {
     return get_bloginfo('name');
 }
 
-add_filter('login_headertext', 'login_title');
+add_filter('login_headertext', 'sympress_starter_login_title');
 
 // Remove Gutenberg's front-end block styles.
-function remove_block_styles(): void
+function sympress_starter_remove_block_styles(): void
 {
     wp_deregister_style('wp-block-library');
     wp_deregister_style('wp-block-library-theme');
 }
 
-add_action('wp_enqueue_scripts', 'remove_block_styles');
+add_action('wp_enqueue_scripts', 'sympress_starter_remove_block_styles');
 
 // Remove core block styles.
 // https://github.com/WordPress/gutenberg/issues/56065
-function remove_core_block_styles(): void
+function sympress_starter_remove_core_block_styles(): void
 {
     wp_dequeue_style('core-block-supports');
 }
 
-add_action('wp_footer', 'remove_core_block_styles');
+add_action('wp_footer', 'sympress_starter_remove_core_block_styles');
 
 // Remove Gutenberg's global styles.
 // https://github.com/WordPress/gutenberg/pull/34334#issuecomment-911531705
-function remove_global_styles(): void
+function sympress_starter_remove_global_styles(): void
 {
     wp_dequeue_style('global-styles');
 }
 
-add_action('wp_enqueue_scripts', 'remove_global_styles');
+add_action('wp_enqueue_scripts', 'sympress_starter_remove_global_styles');
 
 // Remove classic theme styles.
 // https://github.com/WordPress/WordPress/commit/143fd4c1f71fe7d5f6bd7b64c491d9644d861355
-function remove_classic_theme_styles(): void
+function sympress_starter_remove_classic_theme_styles(): void
 {
     wp_dequeue_style('classic-theme-styles');
 }
 
-add_action('wp_enqueue_scripts', 'remove_classic_theme_styles');
+add_action('wp_enqueue_scripts', 'sympress_starter_remove_classic_theme_styles');
 
 // Remove auto-sizes contain inline styles.
 // https://make.wordpress.org/core/2024/10/18/auto-sizes-for-lazy-loaded-images-in-wordpress-6-7/
-function remove_auto_sizes_styles(): void
+function sympress_starter_remove_auto_sizes_styles(): void
 {
     wp_dequeue_style('wp-img-auto-sizes-contain');
 }
 
-add_action('wp_enqueue_scripts', 'remove_auto_sizes_styles');
+add_action('wp_enqueue_scripts', 'sympress_starter_remove_auto_sizes_styles');
 
 // Remove the SVG Filters that are mostly if not only used in Full Site Editing/Gutenberg
 // Detailed discussion at: https://github.com/WordPress/gutenberg/issues/36834
-function remove_svg_filters(): void
+function sympress_starter_remove_svg_filters(): void
 {
     remove_action('wp_body_open', 'gutenberg_global_styles_render_svg_filters');
     remove_action('wp_body_open', 'wp_global_styles_render_svg_filters');
 }
 
-add_action('init', 'remove_svg_filters');
+add_action('init', 'sympress_starter_remove_svg_filters');
 
 // Remove contributor, subscriber and author roles.
-function remove_roles(): void
+function sympress_starter_remove_roles(): void
 {
     remove_role('author');
     remove_role('contributor');
-    remove_role('subscriber');
+    // Keep subscriber as the least-privileged registration/default role.
+    if (get_option('default_role') === 'author' || get_option('default_role') === 'contributor') {
+        update_option('default_role', 'subscriber');
+    }
 }
 
-add_action('init', 'remove_roles');
+add_action('init', 'sympress_starter_remove_roles');
 
 // Disable attachment template loading and redirect to 404.
 // WordPress 6.4 introduced an update to disable attachment pages, but this
 // implementation is not as robust as the current one.
 // https://github.com/joppuyo/disable-media-pages/issues/41
 // https://make.wordpress.org/core/2023/10/16/changes-to-attachment-pages/
-function attachment_redirect_not_found(): void
+function sympress_starter_attachment_redirect_not_found(): void
 {
     if (!is_attachment()) {
         return;
@@ -215,20 +222,20 @@ function attachment_redirect_not_found(): void
     nocache_headers();
 }
 
-add_action('template_redirect', 'attachment_redirect_not_found');
+add_action('template_redirect', 'sympress_starter_attachment_redirect_not_found');
 
 // Disable attachment canonical redirect links.
-function disable_attachment_canonical_redirect_url(string $url): string
+function sympress_starter_disable_attachment_canonical_redirect_url(string $url): string
 {
-    attachment_redirect_not_found();
+    sympress_starter_attachment_redirect_not_found();
 
     return $url;
 }
 
-add_filter('redirect_canonical', 'disable_attachment_canonical_redirect_url', 0, 1);
+add_filter('redirect_canonical', 'sympress_starter_disable_attachment_canonical_redirect_url', 0, 1);
 
 // Disable attachment links.
-function disable_attachment_link(string $url, int $id): string
+function sympress_starter_disable_attachment_link(string $url, int $id): string
 {
     if ($attachment_url = wp_get_attachment_url($id)) {
         return $attachment_url;
@@ -237,10 +244,10 @@ function disable_attachment_link(string $url, int $id): string
     return $url;
 }
 
-add_filter('attachment_link', 'disable_attachment_link', 10, 2);
+add_filter('attachment_link', 'sympress_starter_disable_attachment_link', 10, 2);
 
 // Randomize attachment slugs using UUIDs to avoid slug reservation.
-function disable_attachment_slug_reservation(string $slug, string $id, string $status, string $type): string
+function sympress_starter_disable_attachment_slug_reservation(string $slug, string $id, string $status, string $type): string
 {
     if ($type !== 'attachment') {
         return $slug;
@@ -263,22 +270,22 @@ function disable_attachment_slug_reservation(string $slug, string $id, string $s
     );
 }
 
-add_filter('wp_unique_post_slug', 'disable_attachment_slug_reservation', 10, 4);
+add_filter('wp_unique_post_slug', 'sympress_starter_disable_attachment_slug_reservation', 10, 4);
 
 // Discourage search engines from indexing in non-production environments.
-function disable_indexing(): int
+function sympress_starter_disable_indexing(): int
 {
     return wp_get_environment_type() === 'production' ? 1 : 0;
 }
 
-add_filter('pre_option_blog_public', 'disable_indexing');
+add_filter('pre_option_blog_public', 'sympress_starter_disable_indexing');
 
 // Sanitize HTML content when pasting in TinyMCE editor.
 /**
  * @param array<string, mixed> $config
  * @return array<string, mixed>
  */
-function sanitize_tiny_mce_html_content(array $config): array
+function sympress_starter_sanitize_tiny_mce_html_content(array $config): array
 {
     $config['paste_preprocess'] = "function(plugin, args) {
         // Allow specific HTML tags while sanitizing the content
@@ -306,7 +313,7 @@ function sanitize_tiny_mce_html_content(array $config): array
     return $config;
 }
 
-add_filter('tiny_mce_before_init', 'sanitize_tiny_mce_html_content');
+add_filter('tiny_mce_before_init', 'sympress_starter_sanitize_tiny_mce_html_content');
 
 // Disable the font library.
 // https://developer.wordpress.org/news/snippets/how-to-disable-the-font-library/
@@ -314,11 +321,11 @@ add_filter('tiny_mce_before_init', 'sanitize_tiny_mce_html_content');
  * @param array<string, mixed> $settings
  * @return array<string, mixed>
  */
-function disable_font_library(array $settings): array
+function sympress_starter_disable_font_library(array $settings): array
 {
     $settings['fontLibraryEnabled'] = false;
 
     return $settings;
 }
 
-add_filter('block_editor_settings_all', 'disable_font_library');
+add_filter('block_editor_settings_all', 'sympress_starter_disable_font_library');
