@@ -128,19 +128,34 @@ def restore(settings, archive, identity, confirm, *, staging=False, scrub_script
         wp(settings, 'maintenance-mode', 'deactivate')
 
 
+def write_monitor_state(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with tempfile.NamedTemporaryFile(mode='w', dir=path.parent, delete=False) as stream:
+        temporary = Path(stream.name)
+        try:
+            os.chmod(temporary, 0o600)
+            json.dump(value, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+            os.replace(temporary, path)
+        finally:
+            temporary.unlink(missing_ok=True)
+
+
 def monitor(settings):
     url = settings['health_url']
     parsed = urlsplit(url)
     if parsed.scheme != 'https' or parsed.username or parsed.password:
         raise ValueError('Monitoring requires a canonical HTTPS health URL without credentials.')
-    healthy = True
+    state = Path(settings['state_file']) if settings.get('log_file') else None
+    prior = json.loads(state.read_text()) if state and state.exists() else {}
+    next_state = dict(prior)
+    healthy = not prior.get('pending_alert', False)
     try:
         with urllib.request.urlopen(url, timeout=15) as response:
-            healthy = response.status == 200 and b'"status":"ok"' in response.read(4096).replace(b' ', b'')
+            healthy = healthy and response.status == 200 and b'"status":"ok"' in response.read(4096).replace(b' ', b'')
         if settings.get('log_file'):
             path = Path(settings['log_file'])
-            state = Path(settings['state_file'])
-            prior = json.loads(state.read_text()) if state.exists() else {}
             stat = path.stat()
             offset = prior.get('offset', 0) if prior.get('inode') == stat.st_ino else 0
             if offset > stat.st_size: offset = 0
@@ -151,12 +166,14 @@ def monitor(settings):
                     text = (tail + chunk).lower()
                     healthy = healthy and not any(word in text for word in (b'php fatal', b'uncaught', b'.error:', b'.critical:'))
                     tail = text[-32:]
-            state.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-            state.write_text(json.dumps({'offset': stat.st_size, 'inode': stat.st_ino}))
-            state.chmod(0o600)
+            next_state = {'offset': stat.st_size, 'inode': stat.st_ino}
     except (OSError, urllib.error.URLError):
         healthy = False
     if not healthy:
+        if state:
+            # Persist the generic pending alert before advancing the log cursor.
+            # A failed delivery survives log rotation and a later healthy poll.
+            write_monitor_state(state, {**next_state, 'pending_alert': True})
         recipient = settings.get('alert_recipient')
         if not isinstance(recipient, str) or len(recipient) > 254 or not re.fullmatch(r'[A-Za-z0-9.!#$%&*+_=?^`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}', recipient):
             raise ValueError('Select an explicit single alert_recipient before enabling monitoring.')
@@ -164,7 +181,11 @@ def monitor(settings):
         message = f'To: {recipient}\nSubject: SymPress production health check failed\n\nCheck the private monitoring logs.\n'.encode()
         result = subprocess.run([settings.get('sendmail', '/usr/sbin/sendmail'), '-t'], input=message, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if result.returncode: raise RuntimeError('Alert delivery failed.')
+        if state:
+            write_monitor_state(state, {**next_state, 'pending_alert': False})
         return 1
+    if state:
+        write_monitor_state(state, {**next_state, 'pending_alert': False})
     return 0
 
 

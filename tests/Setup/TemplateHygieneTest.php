@@ -127,7 +127,7 @@ final class TemplateHygieneTest extends TestCase
             $manifest['$schema'],
         );
         self::assertSame(1, $manifest['schemaVersion']);
-        self::assertSame('dev', $composer['minimum-stability'] ?? null);
+        self::assertSame('stable', $composer['minimum-stability'] ?? null);
         self::assertTrue($composer['prefer-stable'] ?? false);
         self::assertSame($composer['name'], $manifest['templates'][0]['packageName']);
         self::assertSame(['bin/console', 'setup', '{project_slug}'], $manifest['templates'][0]['setupCommand']);

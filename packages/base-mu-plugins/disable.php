@@ -10,9 +10,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-if (!filter_var(getenv('SYMPRESS_ENABLE_WORDPRESS_HARDENING'), FILTER_VALIDATE_BOOLEAN)) {
+$sympressStarterHardening = defined('SYMPRESS_ENABLE_WORDPRESS_HARDENING')
+    ? constant('SYMPRESS_ENABLE_WORDPRESS_HARDENING')
+    : ($_ENV['SYMPRESS_ENABLE_WORDPRESS_HARDENING'] ?? $_SERVER['SYMPRESS_ENABLE_WORDPRESS_HARDENING'] ?? getenv('SYMPRESS_ENABLE_WORDPRESS_HARDENING'));
+if (!filter_var($sympressStarterHardening, FILTER_VALIDATE_BOOLEAN)) {
     return;
 }
+unset($sympressStarterHardening);
 
 // Redirects all feeds to home page.
 function sympress_starter_disable_feeds(): void
