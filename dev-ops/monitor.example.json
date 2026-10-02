@@ -1,6 +1,6 @@
 {
   "health_url": "https://www.example.com/wp-json/sympress/v1/health",
-  "log_file": "/srv/sympress/shared/var/log/production.log",
+  "log_glob": "/srv/sympress/shared/var/log/production-????-??-??.log",
   "state_file": "/var/lib/sympress-monitor/cursor.json",
   "alert_recipient": "alerts@example.invalid",
   "sendmail": "/usr/sbin/sendmail"
