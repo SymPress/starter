@@ -142,31 +142,54 @@ def write_monitor_state(path, value):
             temporary.unlink(missing_ok=True)
 
 
+
+def monitor_logs(settings, prior):
+    if settings.get('log_glob'):
+        pattern = Path(settings['log_glob'])
+        # An existing readable directory may legitimately contain no records yet.
+        if not pattern.parent.is_dir():
+            raise OSError('Application log directory is unavailable.')
+        paths = sorted(path for path in pattern.parent.iterdir()
+                       if path.match(pattern.name))
+        cursors = prior.get('files', {})
+    else:
+        paths = [Path(settings['log_file'])]
+        cursors = {str(paths[0]): prior}
+    healthy = True
+    files = {}
+    for path in paths:
+        stat = path.stat()
+        previous = cursors.get(str(path), {})
+        offset = previous.get('offset', 0) if previous.get('inode') == stat.st_ino else 0
+        if offset > stat.st_size:
+            offset = 0
+        with path.open('rb') as stream:
+            stream.seek(offset)
+            tail = b''
+            while chunk := stream.read(65536):
+                text = (tail + chunk).lower()
+                healthy = healthy and not any(word in text for word in
+                    (b'php fatal', b'uncaught', b'.error:', b'.critical:'))
+                tail = text[-32:]
+            files[str(path)] = {'offset': stream.tell(), 'inode': stat.st_ino}
+    return healthy, {'files': files} if settings.get('log_glob') else files[str(paths[0])]
+
+
 def monitor(settings):
     url = settings['health_url']
     parsed = urlsplit(url)
     if parsed.scheme != 'https' or parsed.username or parsed.password:
         raise ValueError('Monitoring requires a canonical HTTPS health URL without credentials.')
-    state = Path(settings['state_file']) if settings.get('log_file') else None
+    state = Path(settings['state_file']) if settings.get('log_file') or settings.get('log_glob') else None
     prior = json.loads(state.read_text()) if state and state.exists() else {}
     next_state = dict(prior)
     healthy = not prior.get('pending_alert', False)
     try:
         with urllib.request.urlopen(url, timeout=15) as response:
             healthy = healthy and response.status == 200 and b'"status":"ok"' in response.read(4096).replace(b' ', b'')
-        if settings.get('log_file'):
-            path = Path(settings['log_file'])
-            stat = path.stat()
-            offset = prior.get('offset', 0) if prior.get('inode') == stat.st_ino else 0
-            if offset > stat.st_size: offset = 0
-            with path.open('rb') as stream:
-                stream.seek(offset)
-                tail = b''
-                while chunk := stream.read(65536):
-                    text = (tail + chunk).lower()
-                    healthy = healthy and not any(word in text for word in (b'php fatal', b'uncaught', b'.error:', b'.critical:'))
-                    tail = text[-32:]
-            next_state = {'offset': stat.st_size, 'inode': stat.st_ino}
+        if settings.get('log_file') or settings.get('log_glob'):
+            logs_healthy, next_state = monitor_logs(settings, prior)
+            healthy = healthy and logs_healthy
     except (OSError, urllib.error.URLError):
         healthy = False
     if not healthy:

@@ -116,6 +116,52 @@ class OperationsTest(unittest.TestCase):
                 self.assertEqual(ops.monitor(settings), 0)
                 self.assertEqual(send.call_count, 2)
 
+
+    def test_rotating_monolog_logs_allow_a_quiet_day_and_keep_per_file_cursors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            settings = {'health_url': 'https://target.test/health',
+                        'log_glob': str(root / 'production-????-??-??.log'),
+                        'state_file': str(root / 'cursor.json'),
+                        'alert_recipient': 'ops@example.invalid'}
+            class Response(io.BytesIO):
+                status = 200
+            with patch.object(ops.urllib.request, 'urlopen', side_effect=lambda *a, **kw: Response(b'{"status":"ok"}')), patch.object(ops.subprocess, 'run') as send:
+                send.return_value.returncode = 0
+                # RotatingFileHandler creates a file only when it emits a record.
+                self.assertEqual(ops.monitor(settings), 0)
+                send.assert_not_called()
+                yesterday = root / 'production-2026-10-01.log'
+                yesterday.write_text('production.ERROR: private_secret\n')
+                self.assertEqual(ops.monitor(settings), 1)
+                self.assertEqual(ops.monitor(settings), 0)
+                today = root / 'production-2026-10-02.log'
+                today.write_text('WARNING healthy\n')
+                with yesterday.open('a') as stream:
+                    stream.write('production.CRITICAL: late error\n')
+                self.assertEqual(ops.monitor(settings), 1)
+                self.assertEqual(ops.monitor(settings), 0)
+                with today.open('a') as stream:
+                    stream.write('PHP Fatal fresh\n')
+                self.assertEqual(ops.monitor(settings), 1)
+                self.assertEqual(ops.monitor(settings), 0)
+                self.assertEqual(send.call_count, 3)
+                self.assertNotIn(b'private_secret', send.call_args.kwargs['input'])
+                self.assertNotIn('private_secret', (root / 'cursor.json').read_text())
+
+    def test_rotating_log_directory_must_exist(self):
+        with tempfile.TemporaryDirectory() as directory:
+            settings = {'health_url': 'https://target.test/health',
+                        'log_glob': str(Path(directory) / 'missing/production-*.log'),
+                        'state_file': str(Path(directory) / 'cursor.json'),
+                        'alert_recipient': 'ops@example.invalid'}
+            class Response(io.BytesIO):
+                status = 200
+            with patch.object(ops.urllib.request, 'urlopen', return_value=Response(b'{"status":"ok"}')), patch.object(ops.subprocess, 'run') as send:
+                send.return_value.returncode = 0
+                self.assertEqual(ops.monitor(settings), 1)
+                send.assert_called_once()
+
     def test_empty_recipient_never_attempts_delivery(self):
         with patch.object(ops.urllib.request, 'urlopen', side_effect=OSError), patch.object(ops.subprocess, 'run') as send:
             with self.assertRaisesRegex(ValueError, 'alert_recipient'):

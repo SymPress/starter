@@ -16,6 +16,7 @@ set('writable_chmod_mode', '0770');
 set('allow_anonymous_stats', false);
 set('php_user', getenv('SYMPRESS_PHP_USER') ?: 'www-data');
 set('php_group', getenv('SYMPRESS_PHP_GROUP') ?: 'www-data');
+set('php_fpm_service', getenv('SYMPRESS_FPM_SERVICE') ?: 'php8.5-fpm');
 
 // The reusable workflow builds the project before it loads deployment credentials.
 // This recipe uploads that exact artifact and never clones/builds on production.
@@ -34,6 +35,10 @@ foreach (['php_user', 'php_group'] as $identity) {
     }
 }
 
+if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_.@-]*$/D', get('php_fpm_service'))) {
+    throw new \RuntimeException('Invalid PHP-FPM service name.');
+}
+
 if (!preg_match('~^/[A-Za-z0-9/_-]+$~D', $path)) {
     throw new \RuntimeException('DEPLOY_PATH must be an absolute simple path.');
 }
@@ -42,6 +47,18 @@ foreach (['production', 'staging'] as $stage) {
     host($stage)->setHostname($hostname)->setRemoteUser($user)->setPort((int) $port)
         ->set('deploy_path', $path)->set('stage', $stage);
 }
+
+task('deploy:fpm-check', static function (): void {
+    run('/usr/bin/systemctl is-active --quiet {{php_fpm_service}}');
+    // Verify noninteractive privilege before publishing or rolling back code.
+    run('sudo -n -l /usr/bin/systemctl reload {{php_fpm_service}}');
+});
+
+task('deploy:fpm-reload', static function (): void {
+    // CLI opcache_reset() cannot invalidate the FPM SAPI or its preload state.
+    run('sudo -n /usr/bin/systemctl reload {{php_fpm_service}}');
+    run('/usr/bin/systemctl is-active --quiet {{php_fpm_service}}');
+});
 
 task('deploy:upload', static function (): void {
     if (!is_file(__DIR__ . '/vendor/autoload.php') || !is_file(__DIR__ . '/public/wp/wp-load.php')) {
@@ -102,8 +119,10 @@ task('deploy:health', static function (): void {
 });
 
 task('deploy', [
-    'deploy:info', 'deploy:setup', 'deploy:lock', 'deploy:release',
+    'deploy:info', 'deploy:fpm-check', 'deploy:setup', 'deploy:lock', 'deploy:release',
     'deploy:upload', 'deploy:shared', 'deploy:environment', 'deploy:writable',
-    'deploy:runtime', 'deploy:permissions', 'deploy:health', 'deploy:symlink', 'deploy:cleanup', 'deploy:unlock',
+    'deploy:runtime', 'deploy:permissions', 'deploy:health', 'deploy:symlink', 'deploy:fpm-reload', 'deploy:cleanup', 'deploy:unlock',
 ]);
+before('rollback', 'deploy:fpm-check');
+after('rollback', 'deploy:fpm-reload');
 after('deploy:failed', 'deploy:unlock');

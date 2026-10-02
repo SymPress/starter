@@ -8,7 +8,6 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPTS = ROOT / ".github" / "scripts"
-DUMMY_URL = "https://hc-ping.com/00000000-0000-0000-0000-000000000000"
 
 
 class CanarySafetyTest(unittest.TestCase):
@@ -18,20 +17,7 @@ class CanarySafetyTest(unittest.TestCase):
         self.path = Path(self.tmp.name)
         self.event = self.path / "event.json"
         self.capture = self.path / "curl.json"
-        fake = self.path / "curl"
-        fake.write_text(
-            "#!/usr/bin/env python3\n"
-            "import json, os, pathlib, sys\n"
-            "pathlib.Path(os.environ['CURL_CAPTURE']).write_text(json.dumps("
-            "{'args': sys.argv[1:], 'config': sys.stdin.read()}))\n"
-            "sys.stdout.write(os.environ.get('FAKE_HTTP_CODE', '200'))\n"
-            "sys.exit(int(os.environ.get('FAKE_CURL_EXIT', '0')))\n"
-        )
-        fake.chmod(0o700)
-        self.env = {
-            "PATH": str(self.path) + os.pathsep + os.environ["PATH"],
-            "CURL_CAPTURE": str(self.capture),
-        }
+        self.env = {"PATH": os.environ["PATH"]}
 
     def run_script(self, name, **env):
         return subprocess.run(
@@ -48,14 +34,6 @@ class CanarySafetyTest(unittest.TestCase):
             "canary-mode.sh",
             GITHUB_EVENT_NAME=event,
             GITHUB_EVENT_PATH=str(self.event),
-        )
-
-    def ping(self, result="success", url=DUMMY_URL, **env):
-        return self.run_script(
-            "canary-heartbeat.sh",
-            CANARY_HEARTBEAT_URL=url,
-            CANARY_RESULT=result,
-            **env,
         )
 
     def test_push_and_pr_keep_the_committed_lock(self):
@@ -109,54 +87,6 @@ class CanarySafetyTest(unittest.TestCase):
                 )
                 self.assertNotEqual(result.returncode, 0)
                 self.assertEqual(result.stdout, "")
-
-    def test_success_uses_post_and_stdin_without_exposing_url(self):
-        result = self.ping()
-        self.assertEqual(result.returncode, 0, result.stderr)
-        call = json.loads(self.capture.read_text())
-        self.assertEqual(call["config"], 'url = "' + DUMMY_URL + '"\n')
-        self.assertEqual(call["args"][0], "--disable")
-        self.assertIn("--fail", call["args"])
-        self.assertIn("--max-time", call["args"])
-        self.assertIn("--retry-max-time", call["args"])
-        self.assertIn("POST", call["args"])
-        self.assertEqual(call["args"][-2:], ["--config", "-"])
-        self.assertNotIn(DUMMY_URL, " ".join(call["args"]))
-        self.assertNotIn(DUMMY_URL, result.stdout + result.stderr)
-        self.assertNotIn("--location", call["args"])
-
-    def test_failed_cancelled_or_skipped_update_sends_fail_and_stays_failed(self):
-        for status in ("failure", "cancelled", "skipped"):
-            with self.subTest(status=status):
-                result = self.ping(status)
-                self.assertNotEqual(result.returncode, 0)
-                call = json.loads(self.capture.read_text())
-                self.assertEqual(call["config"], 'url = "' + DUMMY_URL + '/fail"\n')
-
-    def test_missing_or_invalid_secret_never_calls_curl(self):
-        for url in ("", "http://hc-ping.com/00000000-0000-0000-0000-000000000000",
-                    DUMMY_URL + "/other", DUMMY_URL + "?token=x",
-                    DUMMY_URL + '\nheader = "Authorization: injected"'):
-            with self.subTest(url=url):
-                result = self.ping(url=url)
-                self.assertNotEqual(result.returncode, 0)
-                self.assertFalse(self.capture.exists())
-                self.assertNotIn(url, result.stderr) if url else None
-
-    def test_missing_or_invalid_canary_result_never_sends_success(self):
-        for status in ("", "unknown"):
-            with self.subTest(status=status):
-                result = self.ping(status)
-                self.assertNotEqual(result.returncode, 0)
-                self.assertFalse(self.capture.exists())
-
-    def test_transport_errors_http_errors_and_redirects_fail(self):
-        for exit_code, http_code in (("7", "000"), ("22", "500"),
-                                     ("0", "302"), ("0", "200\n302")):
-            with self.subTest(exit_code=exit_code, http_code=http_code):
-                result = self.ping(FAKE_CURL_EXIT=exit_code, FAKE_HTTP_CODE=http_code)
-                self.assertNotEqual(result.returncode, 0)
-
 
     def workflow_command(self, name):
         workflow = ROOT / ".github" / "workflows" / (
@@ -255,15 +185,14 @@ class CanarySafetyTest(unittest.TestCase):
                 self.assertEqual(calls[-1], failure)
                 self.assertFalse(self.capture.exists())
 
-    def test_only_scheduled_runs_can_update_the_external_weekly_check(self):
+    def test_update_mode_requires_no_external_monitoring(self):
         workflow = ROOT / ".github" / "workflows" / (
             "ddev-canary.yml" if (ROOT / ".github/workflows/ddev-canary.yml").exists()
             else "ddev-smoke.yml"
         )
         text = workflow.read_text()
-        self.assertIn("if: ${{ always() && github.event_name == 'schedule' }}", text)
-        self.assertIn("CANARY_RESULT: ${{ needs.", text)
-        self.assertIn("CANARY_HEARTBEAT_URL: ${{ secrets.CANARY_HEARTBEAT_URL }}", text)
+        self.assertNotIn("heartbeat:", text)
+        self.assertNotIn("CANARY_HEARTBEAT_URL", text)
         self.assertIn('canary_mode="$(bash .github/scripts/canary-mode.sh)"', text)
         self.assertIn("update_dependencies:", text)
         self.assertIn("default: false", text)

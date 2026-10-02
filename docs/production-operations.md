@@ -1,8 +1,8 @@
 # Production operations
 
-The pilot order is alarms and missing-run detection, then an owned site, then
-WooCommerce after the owned pilot passes. [Canary modes and external heartbeat](canaries.md)
-describe the P0 monitoring acceptance; passing push checks alone do not complete it.
+Use this template for a deployed website after validating its installation,
+backup/restore and notification configuration. [Locked checks and update canaries](canaries.md)
+describe repository CI; website monitoring is configured for each installation.
 
 This recipe targets PHP 8.5 FPM, nginx, MariaDB and Composer-managed WordPress.
 It is executable, but hostname, Unix identities, SSH host keys, backup encryption
@@ -20,6 +20,10 @@ script calls `dev-ops/build.php` before SSH credentials are loaded; no custom
 deploy override is needed.
 The recipe accepts stages `production` and `staging` and reads `DEPLOY_HOSTNAME`,
 `DEPLOY_PORT`, `DEPLOY_USER` and optional `DEPLOY_PATH` (default `/srv/sympress`).
+Set `SYMPRESS_FPM_SERVICE` to the remote systemd service (default `php8.5-fpm`).
+The deploy identity needs a narrow passwordless sudo rule for
+`/usr/bin/systemctl reload php8.5-fpm` using the selected service. The recipe
+checks the active service and sudo permission before deploy or rollback.
 Supply independently verified `SSH_KNOWN_HOSTS`; dependency install credentials
 must be a separate read-only key and must end before any lifecycle/build code.
 
@@ -103,9 +107,10 @@ permission provisioning. Never make the project root the HTTP docroot.
 ./deployment/vendor/bin/dep -f deploy.php rollback production -v
 ```
 
-A privileged operator must gracefully reload PHP-FPM after deploy **and rollback**
-when timestamp checks or preload are disabled. Verify the new health response after
-reload. Do not automatically restore the database for a code rollback; inspect
+The recipe gracefully reloads PHP-FPM immediately after switching the release
+symlink and after rollback. Reload errors fail the operation before deploy cleanup;
+the service is checked again after reload. Verify the new HTTP health response.
+A CLI `opcache_reset()` does not reset FPM or its preload state. Do not automatically restore the database for a code rollback; inspect
 migration compatibility and use an approved paired backup when restoration is
 needed. Five old releases are retained. Shared media/logs/.env survive rollbacks.
 
@@ -147,9 +152,10 @@ Only filenames with 8–64 hex fingerprints get `immutable` for one year. Mutabl
 assets and JSON manifests use five minutes plus revalidation. Pure sequences of
 `utm_*`, `fbclid` and `gclid` parameters use the clean original request path for
 page-cache keys. Unknown/semantic/search/auth parameters bypass. Cookie bypass
-includes `sympress_consent`, login/password/comment, commerce, membership and
-language/currency variants; update the consent cookie matcher if configured to a
-custom name. Authorization and unsafe HTTP methods bypass. Upstream Set-Cookie
+includes login/password/comment, commerce, membership and language/currency
+variants. SymPress Consent gates scripts in cookie-invariant HTML, so its cookie
+shares the anonymous page cache. Add an explicit cookie bypass only for integrations
+that render different HTML on the server. Authorization and unsafe HTTP methods bypass. Upstream Set-Cookie
 prevents storage. REST/admin/login endpoints bypass. Consent HTML must still remain
 cookie-invariant as defined by the consent package.
 
@@ -268,7 +274,11 @@ is intentionally escaped as `%%`. Run `systemd-analyze verify` before enabling.
 The read-only `/wp-json/sympress/v1/health` endpoint performs `SELECT 1` and returns
 only `status`, with 503 for DB failure; nginx bypasses its page cache. The supplied
 monitor checks canonical HTTPS, the status and newly appended fatal/uncaught/error
-log lines. Rotation/truncation reset the private byte cursor. Failed health/log
+log lines. Set `log_glob` to `production-????-??-??.log` for the supplied Monolog
+rotating handler. Each file has its own private byte cursor, so late records in
+yesterday\'s file are still read. A quiet day before the first warning needs no log
+file; a missing/unreadable log directory is a failure. A fixed `log_file` remains
+supported. Rotation/truncation reset the corresponding cursor. Failed health/log
 checks return nonzero and send a generic message through local sendmail to the
 explicit `alert_recipient`. They never include URLs/log content/provider secrets.
 Select a real recipient and configure/test local MTA delivery before enabling the
