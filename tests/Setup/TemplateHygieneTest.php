@@ -9,6 +9,20 @@ use Symfony\Component\Process\Process;
 
 final class TemplateHygieneTest extends TestCase
 {
+    public function testRootRequiresRuntimeWithTransientDatabaseStatusFix(): void
+    {
+        $composer = json_decode((string) file_get_contents($this->projectDir . '/composer.json'), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame('^1.1.3', $composer['require']['sympress/runtime']);
+        $lock = json_decode((string) file_get_contents($this->projectDir . '/composer.lock'), true, flags: JSON_THROW_ON_ERROR);
+        $packages = array_column($lock['packages'], null, 'name');
+        self::assertArrayHasKey('sympress/runtime', $packages);
+        $runtime = $packages['sympress/runtime'];
+        self::assertStringNotContainsString('dev', $runtime['version']);
+        self::assertTrue(version_compare(ltrim($runtime['version'], 'v'), '1.1.3', '>='));
+        self::assertSame('https://github.com/SymPress/runtime.git', $runtime['source']['url']);
+        self::assertStringStartsWith('https://api.github.com/repos/SymPress/runtime/zipball/', $runtime['dist']['url']);
+    }
+
     private string $projectDir;
 
     protected function setUp(): void

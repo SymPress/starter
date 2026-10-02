@@ -17,6 +17,8 @@ DDEV's `ddev.site` wildcard DNS is the default so setup should not need administ
 
 Composer install and update intentionally run SymPress Runtime through the Composer plugin. SymPress Runtime installs, syncs, and regenerates the WordPress project files and plugin/theme layout.
 
+The project requires Runtime 1.1.3 or later so pre-install database observations stay out of persistent environment caches and diagnostics see the installed site.
+
 The native configuration is `dev-ops/runtime.json`. Runtime downloads the pinned
 WP-CLI PHAR and records its integrity in `sympress-runtime.lock`; retain this lock
 with the project. The PHAR and generated bootstrap files are ignored by Git.
