@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '6 4 * * 3'
   workflow_dispatch:
+    inputs:
+      update_dependencies:
+        description: Exercise the fresh stable dependency update path
+        type: boolean
+        default: false
   pull_request:
   push:
     branches:
@@ -20,24 +25,48 @@ jobs:
       allow_custom_commands: true
       ddev_start_command: ':'
       setup_command: |
+        set -euo pipefail
         cp .env.example .env
         ddev start
         primary_url="$(ddev describe -j | jq -r '.raw.primary_url // empty')"
         test -n "$primary_url"
         perl -0pi -e "s#https://sympress-starter\\.ddev\\.site#$primary_url#g" .env
-        if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+        canary_mode="$(bash .github/scripts/canary-mode.sh)"
+        if [ "$canary_mode" = "update" ]; then
           ddev composer update --with-all-dependencies --no-interaction --no-scripts
         fi
         ddev composer install --no-interaction
         ddev composer runtime:setup --no-interaction
       playwright_install_command: ':'
       playwright_run_command: |
+        set -euo pipefail
+        ddev composer qa
         ddev exec wp core is-installed
         ddev exec wp db check
         primary_url="$(ddev describe -j | jq -r '.raw.primary_url // empty')"
         test -n "$primary_url"
         curl -k -I --fail --max-time 20 "$primary_url"
+      playwright_artifact_name: sympress-starter-canary-evidence
+      playwright_artifact_path: composer.lock
     secrets:
       SSH_KEY: ${{ secrets.COMPOSER_SSH_KEY }}
       SSH_KNOWN_HOSTS: ${{ secrets.COMPOSER_SSH_KNOWN_HOSTS }}
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
+
+  heartbeat:
+    name: External scheduled canary heartbeat
+    if: ${{ always() && github.event_name == 'schedule' }}
+    needs: ddev-smoke
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - name: Report completed update canary to its external check
+        env:
+          CANARY_HEARTBEAT_URL: ${{ secrets.CANARY_HEARTBEAT_URL }}
+          CANARY_RESULT: ${{ needs.ddev-smoke.result }}
+        run: bash .github/scripts/canary-heartbeat.sh
