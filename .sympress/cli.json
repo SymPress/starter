@@ -7,7 +7,7 @@
       "packageName": "sympress/starter",
       "repositoryUrl": "https://github.com/SymPress/starter",
       "description": "DDEV-ready SymPress WordPress starter with SymPress Runtime, Composer-managed WordPress, SymPress kernel, WP-CLI console and quality tooling.",
-      "defaultVersion": "1.0.x-dev",
+      "defaultVersion": "1.0.0",
       "setupCommand": [
         "bin/console",
         "setup",

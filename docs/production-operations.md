@@ -11,8 +11,11 @@ Do not apply it to a running site without the site's change approval.
 
 ## Build before deployment credentials
 
-The reusable `deploy-deployer.yml` workflow builds in `working_directory` before it loads
-`GITHUB_USER_SSH_KEY`. Its tool project is `deployment/`, with committed
+The reusable `deploy-deployer.yml` workflow fetches locked dependencies without scripts
+or plugins, then builds in a separate job with no installation or deployment secrets.
+In that isolated build job, the installed Composer plugins repair the WordPress
+layout; Composer scripts stay disabled until the explicit Runtime command.
+A run-scoped artifact is verified before the deployment job loads `GITHUB_USER_SSH_KEY`. Its tool project is `deployment/`, with committed
 `composer.json` and `composer.lock`; dependencies are installed with
 `--no-dev --no-scripts --no-plugins`. The default `./vendor/bin/dep deploy` works inside `deployment/`: its thin
 `deployment/deploy.php` loads the project recipe. The locked root npm `build`
@@ -24,6 +27,8 @@ Set `SYMPRESS_FPM_SERVICE` to the remote systemd service (default `php8.5-fpm`).
 The deploy identity needs a narrow passwordless sudo rule for
 `/usr/bin/systemctl reload php8.5-fpm` using the selected service. The recipe
 checks the active service and sudo permission before deploy or rollback.
+Install `acl` for `setfacl`, and `libfcgi-bin` for `/usr/bin/cgi-fcgi`; give the deploy identity access to the
+private pool socket. `SYMPRESS_FPM_SOCKET` defaults to `/run/php/php8.5-fpm.sock`.
 Supply independently verified `SSH_KNOWN_HOSTS`; dependency install credentials
 must be a separate read-only key and must end before any lifecycle/build code.
 
@@ -31,6 +36,8 @@ Build the artifact without production credentials:
 
 ```sh
 composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-plugins
+# In the separate build environment, after installation credentials are removed:
+composer install --no-dev --no-interaction --prefer-dist --no-scripts
 php vendor/bin/runtime --no-interaction
 # Demo only: composer compile-assets --mode production
 composer dump-autoload --no-dev --optimize --classmap-authoritative
@@ -107,9 +114,13 @@ permission provisioning. Never make the project root the HTTP docroot.
 ./deployment/vendor/bin/dep -f deploy.php rollback production -v
 ```
 
-The recipe gracefully reloads PHP-FPM immediately after switching the release
-symlink and after rollback. Reload errors fail the operation before deploy cleanup;
-the service is checked again after reload. Verify the new HTTP health response.
+After switching the release symlink and after an existing rollback, the recipe
+gracefully reloads FPM, resets OPcache through its private Unix socket, and checks
+the canonical HTTPS health endpoint against the current
+release's `SYMPRESS_KERNEL_BUILD_ID`. A failed reset, reload or Build-ID check fails
+the operation before deploy cleanup. Candidate helpers are installed privately in
+`shared/sympress-tools`, so retained releases need no helper files. A retained
+release without a Build-ID still reloads FPM, then explicitly fails verification.
 A CLI `opcache_reset()` does not reset FPM or its preload state. Do not automatically restore the database for a code rollback; inspect
 migration compatibility and use an approved paired backup when restoration is
 needed. Five old releases are retained. Shared media/logs/.env survive rollbacks.
@@ -135,8 +146,8 @@ in the site's enabled virtual hosts. Set the actual FPM socket/certificate paths
 provision `/var/cache/nginx/wordpress` for nginx, run `nginx -t`, then reload only
 through the approved deployment mechanism. HTTP redirects to a literal canonical
 HTTPS hostname. Enable HSTS only after certificate/chain, canonical redirect and
-HTTPS login/health acceptance. Until then omit the HSTS directives from the live
-TLS configuration. HSTS applies only to the accepted TLS site and deliberately omits
+HTTPS login/health acceptance using the renderer's explicit `--hsts` flag.
+Rendered configurations omit HSTS by default. HSTS applies only to the accepted TLS site and deliberately omits
 `includeSubDomains`/`preload` until every subdomain is ready. Headers are repeated
 inside locations that declare their own `add_header` because nginx inheritance
 otherwise drops them. The baseline CSP limits `frame-ancestors`; extend it only
@@ -318,3 +329,19 @@ Both Runtime configs pin WP-CLI v2.12.0 with SHA256
 `ce34ddd838f7351d6759068d09793f26755463b4a4610a5a5c0a97b68220d85c`,
 verified against the official release PHAR. Retain `sympress-runtime.lock`; a GitHub
 metadata outage does not require floating latest or an integrity bypass.
+
+The public health response exposes only generic status and the opaque Build-ID
+(`null` in development without an ID), never configuration or credentials. The
+monitor account needs the configured PHP log group; its systemd example uses
+`SupplementaryGroups=sympress-log`. Daily logs use `production-????-??-??.log`; new log
+errors send one alert, a persistent HTTP outage is deduplicated until recovery,
+and failed deliveries remain pending for retry.
+
+The log group is separate from the PHP code/configuration group. Create the selected
+`SYMPRESS_LOG_GROUP` (default `sympress-log`) and add the FPM and deploy identities
+to it; the monitor receives only this group. Code and `.env` remain under
+`SYMPRESS_PHP_GROUP`. Health monitoring rejects redirects and requires a bounded
+JSON object with top-level `status: ok` from the canonical HTTPS endpoint.
+The recipe grants the log group only directory traversal (`--x`) on the deploy,
+shared and shared/var ancestors with POSIX ACLs; it never grants that group access
+to `.env` or code. Keep the monitor log path under `shared/var/log`.

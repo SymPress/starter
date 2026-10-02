@@ -77,7 +77,7 @@ class OperationsTest(unittest.TestCase):
             settings = {'health_url':'https://target.test/health','log_file':str(log),'state_file':str(tmp / 'state.json'),'alert_recipient':'ops@example.invalid','sendmail':'/no/real/message'}
             class Response(io.BytesIO):
                 status = 200
-            with patch.object(ops.urllib.request, 'urlopen', side_effect=lambda *a, **kw:Response(b'{"status":"ok"}')):
+            with patch.object(ops, 'open_health', side_effect=lambda *a, **kw:Response(b'{"status":"ok"}')):
                 self.assertEqual(ops.monitor(settings), 0)
                 with log.open('a') as stream:stream.write('PHP Fatal password=private_secret\n')
                 with patch.object(ops.subprocess, 'run') as send:
@@ -100,7 +100,7 @@ class OperationsTest(unittest.TestCase):
                         'state_file': str(state), 'alert_recipient': 'ops@example.invalid'}
             class Response(io.BytesIO):
                 status = 200
-            with patch.object(ops.urllib.request, 'urlopen', side_effect=lambda *a, **kw: Response(b'{"status":"ok"}')), patch.object(ops.subprocess, 'run') as send:
+            with patch.object(ops, 'open_health', side_effect=lambda *a, **kw: Response(b'{"status":"ok"}')), patch.object(ops.subprocess, 'run') as send:
                 send.return_value.returncode = 75
                 with self.assertRaisesRegex(RuntimeError, 'Alert delivery failed'):
                     ops.monitor(settings)
@@ -126,7 +126,7 @@ class OperationsTest(unittest.TestCase):
                         'alert_recipient': 'ops@example.invalid'}
             class Response(io.BytesIO):
                 status = 200
-            with patch.object(ops.urllib.request, 'urlopen', side_effect=lambda *a, **kw: Response(b'{"status":"ok"}')), patch.object(ops.subprocess, 'run') as send:
+            with patch.object(ops, 'open_health', side_effect=lambda *a, **kw: Response(b'{"status":"ok"}')), patch.object(ops.subprocess, 'run') as send:
                 send.return_value.returncode = 0
                 # RotatingFileHandler creates a file only when it emits a record.
                 self.assertEqual(ops.monitor(settings), 0)
@@ -157,13 +157,13 @@ class OperationsTest(unittest.TestCase):
                         'alert_recipient': 'ops@example.invalid'}
             class Response(io.BytesIO):
                 status = 200
-            with patch.object(ops.urllib.request, 'urlopen', return_value=Response(b'{"status":"ok"}')), patch.object(ops.subprocess, 'run') as send:
+            with patch.object(ops, 'open_health', return_value=Response(b'{"status":"ok"}')), patch.object(ops.subprocess, 'run') as send:
                 send.return_value.returncode = 0
                 self.assertEqual(ops.monitor(settings), 1)
                 send.assert_called_once()
 
     def test_empty_recipient_never_attempts_delivery(self):
-        with patch.object(ops.urllib.request, 'urlopen', side_effect=OSError), patch.object(ops.subprocess, 'run') as send:
+        with patch.object(ops, 'open_health', side_effect=OSError), patch.object(ops.subprocess, 'run') as send:
             with self.assertRaisesRegex(ValueError, 'alert_recipient'):
                 ops.monitor({'health_url':'https://target.test/health'})
             send.assert_not_called()

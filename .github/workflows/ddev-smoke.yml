@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   ddev-smoke:
-    uses: sympress/workflows/.github/workflows/ddev-playwright.yml@8639b193c127039573a9a907f811db7c3574c23e
+    uses: sympress/workflows/.github/workflows/ddev-playwright.yml@0c311d7c8fff9352a1cae5819cf2615b08aa1934
     with:
       php_version: '8.5'
       allow_custom_commands: true
@@ -33,7 +33,7 @@ jobs:
         perl -0pi -e "s#https://sympress-starter\\.ddev\\.site#$primary_url#g" .env
         canary_mode="$(bash .github/scripts/canary-mode.sh)"
         if [ "$canary_mode" = "update" ]; then
-          ddev composer update --with-all-dependencies --no-interaction --no-scripts
+          ddev composer update --with-all-dependencies --no-interaction --no-scripts --no-plugins
         fi
         ddev composer install --no-interaction
         ddev composer runtime:setup --no-interaction

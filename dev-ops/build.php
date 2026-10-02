@@ -5,7 +5,8 @@ declare(strict_types=1);
 // Credential-free build entry point used by the reusable Deployer npm build stage.
 chdir(dirname(__DIR__));
 $commands = [
-    ['composer', 'install', '--no-dev', '--no-interaction', '--prefer-dist', '--no-scripts', '--no-plugins'],
+    // Fetch disables plugins; this secret-free phase activates the installed WordPress installers.
+    ['composer', 'install', '--no-dev', '--no-interaction', '--prefer-dist', '--no-scripts'],
     [PHP_BINARY, 'vendor/bin/runtime', '--no-interaction'],
 ];
 $composer = json_decode((string) file_get_contents('composer.json'), true, flags: JSON_THROW_ON_ERROR);
