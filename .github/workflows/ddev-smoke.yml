@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   ddev-smoke:
-    uses: sympress/workflows/.github/workflows/ddev-playwright.yml@177fa0d727b278d2103052ec77c102b4a4c492a0
+    uses: sympress/workflows/.github/workflows/ddev-playwright.yml@8639b193c127039573a9a907f811db7c3574c23e
     with:
       php_version: '8.5'
       allow_custom_commands: true
