@@ -23,6 +23,43 @@ OPENSSL = shutil.which('openssl')
 
 
 class ProductionDefaultsTest(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('php'), 'The private WordPress verifier requires PHP.')
+    def test_publication_verifier_bounds_health_body_before_decoding(self):
+        helper = Path(__file__).resolve().parents[1] / 'verify-build.php'
+        code = r'''
+define('WP_CLI', true);
+define('SYMPRESS_KERNEL_BUILD_ID', 'release-probe');
+class WP_CLI {
+    public static function error($message) { fwrite(STDERR, $message); exit(17); }
+    public static function success($message) { echo $message; }
+}
+function home_url($path) { return 'https://fixture.invalid' . $path; }
+function wp_parse_url($url, $component) { return parse_url($url, $component); }
+function add_query_arg($key, $value, $url) { return $url; }
+function wp_remote_get($url, $options) {
+    echo json_encode($options) . "\n";
+    return ['body' => stream_get_contents(STDIN)];
+}
+function is_wp_error($response) { return false; }
+function wp_remote_retrieve_body($response) { return $response['body']; }
+function wp_remote_retrieve_response_code($response) { return 200; }
+require $argv[1];
+'''
+        body = json.dumps({'status': 'ok', 'build_id': 'release-probe'})
+        for size in [len(body), 4096, 4097, 1024 * 1024]:
+            with self.subTest(bytes=size):
+                result = subprocess.run(['php', '-r', code, str(helper)],
+                                        input=body + ' ' * (size - len(body)),
+                                        text=True, capture_output=True, timeout=10)
+                self.assertEqual(result.returncode, 0 if size <= 4096 else 17, result.stderr)
+                options = json.loads(result.stdout.splitlines()[0])
+                self.assertEqual(options.get('limit_response_size'), 4097)
+                self.assertEqual(options['redirection'], 0)
+                self.assertTrue(options['sslverify'])
+                if size > 4096:
+                    self.assertNotIn('Published health matches', result.stdout)
+                    self.assertEqual(result.stderr, 'Published health is unavailable or unhealthy.')
+
     def test_hsts_is_explicit_and_shared_headers_cover_all_locations(self):
         root = Path(__file__).resolve().parents[1]
         with tempfile.TemporaryDirectory() as directory:

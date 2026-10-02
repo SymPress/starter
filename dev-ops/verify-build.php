@@ -16,10 +16,11 @@ if (wp_parse_url($url, PHP_URL_SCHEME) !== 'https') {
     WP_CLI::error('Published health verification requires the canonical HTTPS site.');
 }
 $response = wp_remote_get(add_query_arg('sympress_build_probe', $buildId, $url), [
-    'timeout' => 15, 'redirection' => 0, 'sslverify' => true,
+    'timeout' => 15, 'redirection' => 0, 'sslverify' => true, 'limit_response_size' => 4097,
     'headers' => ['Cache-Control' => 'no-cache'],
 ]);
-$body = is_wp_error($response) ? null : json_decode(wp_remote_retrieve_body($response), true);
+$rawBody = is_wp_error($response) ? null : wp_remote_retrieve_body($response);
+$body = is_string($rawBody) && strlen($rawBody) <= 4096 ? json_decode($rawBody, true) : null;
 if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200
     || !is_array($body) || ($body['status'] ?? '') !== 'ok') {
     WP_CLI::error('Published health is unavailable or unhealthy.');
