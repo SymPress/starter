@@ -173,7 +173,7 @@ Enable only after testing with the final package set and budget memory from actu
 measurements. The kernel cache stays release-specific to avoid stale containers.
 
 The optional `sympress/framework-bundle` supplies a WordPress object-cache adapter.
-The pilot default is Redis with that adapter from `^1.0.2`, exactly one drop-in
+The pilot default is Redis with that adapter from `^1.0.3`, exactly one drop-in
 owner and an independent site/environment secret. Keep the generic template
 optional; select this profile in the generated pilot project. In `dev-ops/runtime.json`, add:
 

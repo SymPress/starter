@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6593ffccf057a7d0214f4c62d7e0535e",
+    "content-hash": "2eb5efd91ceabf14bb485390dfc92f44",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -4819,16 +4819,16 @@
         },
         {
             "name": "sympress/kernel",
-            "version": "v1.1.1",
+            "version": "v1.1.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/kernel.git",
-                "reference": "17b50f397b66d408a8f45aeadd7b41664f3d957e"
+                "reference": "720d95fb412acdc151ad84f159e60ebf18f1d327"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/kernel/zipball/17b50f397b66d408a8f45aeadd7b41664f3d957e",
-                "reference": "17b50f397b66d408a8f45aeadd7b41664f3d957e",
+                "url": "https://api.github.com/repos/SymPress/kernel/zipball/720d95fb412acdc151ad84f159e60ebf18f1d327",
+                "reference": "720d95fb412acdc151ad84f159e60ebf18f1d327",
                 "shasum": ""
             },
             "require": {
@@ -4879,9 +4879,9 @@
             "description": "WordPress kernel and shared service container built on Symfony DependencyInjection.",
             "support": {
                 "issues": "https://github.com/SymPress/kernel/issues",
-                "source": "https://github.com/SymPress/kernel/tree/v1.1.1"
+                "source": "https://github.com/SymPress/kernel/tree/v1.1.2"
             },
-            "time": "2026-10-02T11:05:15+00:00"
+            "time": "2026-10-02T17:44:27+00:00"
         },
         {
             "name": "sympress/monolog-bundle",
