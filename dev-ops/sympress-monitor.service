@@ -5,6 +5,7 @@ After=network-online.target
 Type=oneshot
 User=sympress-monitor
 Group=sympress-monitor
+SupplementaryGroups=sympress-log
 ExecStart=/usr/bin/python3 /usr/local/lib/sympress/operations.py --config /etc/sympress/monitor.json monitor
 UMask=0077
 NoNewPrivileges=true

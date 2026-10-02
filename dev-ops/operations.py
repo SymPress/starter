@@ -175,24 +175,38 @@ def monitor_logs(settings, prior):
     return healthy, {'files': files} if settings.get('log_glob') else files[str(paths[0])]
 
 
+class RejectHealthRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, request, response, code, message, headers, new_url):
+        raise urllib.error.HTTPError(request.full_url, code, 'Canonical health endpoint must not redirect.', headers, response)
+
+
+def open_health(url, timeout=15):
+    return urllib.request.build_opener(RejectHealthRedirect()).open(url, timeout=timeout)
+
+
 def monitor(settings):
     url = settings['health_url']
     parsed = urlsplit(url)
     if parsed.scheme != 'https' or parsed.username or parsed.password:
         raise ValueError('Monitoring requires a canonical HTTPS health URL without credentials.')
-    state = Path(settings['state_file']) if settings.get('log_file') or settings.get('log_glob') else None
+    state = Path(settings['state_file']) if settings.get('state_file') else None
     prior = json.loads(state.read_text()) if state and state.exists() else {}
     next_state = dict(prior)
-    healthy = not prior.get('pending_alert', False)
+    health_healthy = True
+    logs_healthy = True
     try:
-        with urllib.request.urlopen(url, timeout=15) as response:
-            healthy = healthy and response.status == 200 and b'"status":"ok"' in response.read(4096).replace(b' ', b'')
+        with open_health(url, timeout=15) as response:
+            body = response.read(4097)
+            payload = json.loads(body) if len(body) <= 4096 else None
+            health_healthy = response.status == 200 and isinstance(payload, dict) and payload.get('status') == 'ok'
         if settings.get('log_file') or settings.get('log_glob'):
             logs_healthy, next_state = monitor_logs(settings, prior)
-            healthy = healthy and logs_healthy
-    except (OSError, urllib.error.URLError):
-        healthy = False
-    if not healthy:
+    except (OSError, ValueError, urllib.error.URLError):
+        health_healthy = False
+    healthy = health_healthy and logs_healthy
+    next_state['health_alerted'] = bool(prior.get('health_alerted')) and not health_healthy
+    notify = prior.get('pending_alert', False) or not logs_healthy or (not health_healthy and not next_state['health_alerted'])
+    if notify:
         if state:
             # Persist the generic pending alert before advancing the log cursor.
             # A failed delivery survives log rotation and a later healthy poll.
@@ -205,11 +219,11 @@ def monitor(settings):
         result = subprocess.run([settings.get('sendmail', '/usr/sbin/sendmail'), '-t'], input=message, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         if result.returncode: raise RuntimeError('Alert delivery failed.')
         if state:
-            write_monitor_state(state, {**next_state, 'pending_alert': False})
+            write_monitor_state(state, {**next_state, 'pending_alert': False, 'health_alerted': not health_healthy})
         return 1
     if state:
         write_monitor_state(state, {**next_state, 'pending_alert': False})
-    return 0
+    return 0 if healthy else 1
 
 
 def main():

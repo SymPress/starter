@@ -6,9 +6,9 @@
     "require": {
         "php": "^8.5",
         "sympress/base-mu-plugins": "^1.0",
-        "sympress/kernel": "^1.1.2",
-        "sympress/monolog-bundle": "^1.0.2",
-        "sympress/wp-cli-console": "^1.0.2",
+        "sympress/kernel": "^1.1.3",
+        "sympress/monolog-bundle": "^1.0.3",
+        "sympress/wp-cli-console": "^1.0.4",
         "roots/wordpress": "^7.1.1",
         "sympress/runtime": "^1.1.3",
         "wpackagist-theme/twentytwentyfive": "^1.5.0"

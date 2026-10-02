@@ -148,7 +148,7 @@ class CanarySafetyTest(unittest.TestCase):
     def test_nested_setup_stops_after_a_failed_dependency_update(self):
         result, calls = self.nested_workflow_command(
             "setup_command",
-            failure="composer update --with-all-dependencies --no-interaction --no-scripts",
+            failure="composer update --with-all-dependencies --no-interaction --no-scripts --no-plugins",
         )
         self.assertEqual(result.returncode, 17, result.stderr)
         self.assertFalse(any(call.startswith("composer install") for call in calls))
@@ -191,6 +191,7 @@ class CanarySafetyTest(unittest.TestCase):
             else "ddev-smoke.yml"
         )
         text = workflow.read_text()
+        self.assertFalse((ROOT / ".github/workflows/canary-alert.yml").exists())
         self.assertNotIn("heartbeat:", text)
         self.assertNotIn("CANARY_HEARTBEAT_URL", text)
         self.assertIn('canary_mode="$(bash .github/scripts/canary-mode.sh)"', text)

@@ -20,7 +20,18 @@ add_action('rest_api_init', static function (): void {
             $wpdb = $GLOBALS['wpdb'];
             $healthy = $wpdb->get_var('SELECT 1') === '1';
 
-            return new WP_REST_Response(['status' => $healthy ? 'ok' : 'error'], $healthy ? 200 : 503);
+            $buildId = defined('SYMPRESS_KERNEL_BUILD_ID')
+                ? constant('SYMPRESS_KERNEL_BUILD_ID')
+                : sanitize_text_field(wp_unslash(
+                    $_ENV['SYMPRESS_KERNEL_BUILD_ID']
+                    ?? $_SERVER['SYMPRESS_KERNEL_BUILD_ID']
+                    ?? getenv('SYMPRESS_KERNEL_BUILD_ID'),
+                ));
+            $buildId = is_string($buildId) && preg_match('/^[A-Za-z0-9._-]{1,128}$/D', $buildId) ? $buildId : null;
+            return new WP_REST_Response(
+                ['status' => $healthy ? 'ok' : 'error', 'build_id' => $buildId],
+                $healthy ? 200 : 503,
+            );
         },
     ]);
 });

@@ -43,7 +43,7 @@ cd my_project_directory
 Use a specific development line:
 
 ```sh
-composer create-project sympress/starter:"1.0.x-dev" my_project_directory --no-install
+composer create-project sympress/starter:"^1.0" my_project_directory --no-install
 cd my_project_directory
 ```
 

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2eb5efd91ceabf14bb485390dfc92f44",
+    "content-hash": "2af7956a822479c2a5441ff74a37e10f",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -4819,16 +4819,16 @@
         },
         {
             "name": "sympress/kernel",
-            "version": "v1.1.2",
+            "version": "v1.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/kernel.git",
-                "reference": "720d95fb412acdc151ad84f159e60ebf18f1d327"
+                "reference": "ed83314fda5210b756dd4984edcba405870ff5bb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/kernel/zipball/720d95fb412acdc151ad84f159e60ebf18f1d327",
-                "reference": "720d95fb412acdc151ad84f159e60ebf18f1d327",
+                "url": "https://api.github.com/repos/SymPress/kernel/zipball/ed83314fda5210b756dd4984edcba405870ff5bb",
+                "reference": "ed83314fda5210b756dd4984edcba405870ff5bb",
                 "shasum": ""
             },
             "require": {
@@ -4879,22 +4879,22 @@
             "description": "WordPress kernel and shared service container built on Symfony DependencyInjection.",
             "support": {
                 "issues": "https://github.com/SymPress/kernel/issues",
-                "source": "https://github.com/SymPress/kernel/tree/v1.1.2"
+                "source": "https://github.com/SymPress/kernel/tree/v1.1.3"
             },
-            "time": "2026-10-02T17:44:27+00:00"
+            "time": "2026-10-02T20:13:41+00:00"
         },
         {
             "name": "sympress/monolog-bundle",
-            "version": "v1.0.2",
+            "version": "v1.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/monolog-bundle.git",
-                "reference": "a14df7fe9cac7c966e38e3ffb9cbd215fac6f0db"
+                "reference": "241bdbb2dd076b2216e383e4884ba716cbf8369c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/monolog-bundle/zipball/a14df7fe9cac7c966e38e3ffb9cbd215fac6f0db",
-                "reference": "a14df7fe9cac7c966e38e3ffb9cbd215fac6f0db",
+                "url": "https://api.github.com/repos/SymPress/monolog-bundle/zipball/241bdbb2dd076b2216e383e4884ba716cbf8369c",
+                "reference": "241bdbb2dd076b2216e383e4884ba716cbf8369c",
                 "shasum": ""
             },
             "require": {
@@ -4935,9 +4935,9 @@
             "description": "Monolog integration bundle for the WordPress kernel.",
             "support": {
                 "issues": "https://github.com/SymPress/monolog-bundle/issues",
-                "source": "https://github.com/SymPress/monolog-bundle/tree/v1.0.2"
+                "source": "https://github.com/SymPress/monolog-bundle/tree/v1.0.3"
             },
-            "time": "2026-10-02T11:08:07+00:00"
+            "time": "2026-10-02T20:13:42+00:00"
         },
         {
             "name": "sympress/runtime",
@@ -5019,16 +5019,16 @@
         },
         {
             "name": "sympress/wp-cli-console",
-            "version": "v1.0.2",
+            "version": "v1.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/wp-cli-console.git",
-                "reference": "f245a35f392ccc38fd0d8fec5cf3b3f9ce030e67"
+                "reference": "e043369cfd1247268da5ea5b629009fa092fb1de"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/wp-cli-console/zipball/f245a35f392ccc38fd0d8fec5cf3b3f9ce030e67",
-                "reference": "f245a35f392ccc38fd0d8fec5cf3b3f9ce030e67",
+                "url": "https://api.github.com/repos/SymPress/wp-cli-console/zipball/e043369cfd1247268da5ea5b629009fa092fb1de",
+                "reference": "e043369cfd1247268da5ea5b629009fa092fb1de",
                 "shasum": ""
             },
             "require": {
@@ -5066,9 +5066,9 @@
             "description": "Symfony Console wrappers for useful WP-CLI workflows.",
             "support": {
                 "issues": "https://github.com/SymPress/wp-cli-console/issues",
-                "source": "https://github.com/SymPress/wp-cli-console/tree/v1.0.2"
+                "source": "https://github.com/SymPress/wp-cli-console/tree/v1.0.4"
             },
-            "time": "2026-10-02T11:08:06+00:00"
+            "time": "2026-10-02T20:39:58+00:00"
         },
         {
             "name": "wpackagist-theme/twentytwentyfive",
