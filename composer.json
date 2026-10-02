@@ -5,20 +5,20 @@
     "license": "GPL-2.0-or-later",
     "require": {
         "php": "^8.5",
-        "sympress/base-mu-plugins": "dev-main",
-        "sympress/kernel": "^1.1",
-        "sympress/monolog-bundle": "dev-main as 1.0.x-dev",
-        "sympress/wp-cli-console": "dev-main as 1.0.x-dev",
+        "sympress/base-mu-plugins": "^1.0",
+        "sympress/kernel": "^1.1.1",
+        "sympress/monolog-bundle": "^1.0.2",
+        "sympress/wp-cli-console": "^1.0.2",
         "roots/wordpress": "^7.1.1",
-        "sympress/runtime": "^1.1.1",
+        "sympress/runtime": "^1.1.2",
         "wpackagist-theme/twentytwentyfive": "^1.5.0"
     },
     "require-dev": {
         "phpstan/extension-installer": "^1.4.3",
         "phpstan/phpstan": "^2.2.2",
         "phpunit/phpunit": "^13.2",
-        "sympress/coding-standards": "dev-main",
-        "sympress/profiler": "dev-main as 1.0.x-dev",
+        "sympress/coding-standards": "^1.1.1",
+        "sympress/profiler": "^1.0.2",
         "symfony/var-dumper": "^8.1.0",
         "szepeviktor/phpstan-wordpress": "^2.0.3"
     },
@@ -88,7 +88,7 @@
             }
         }
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "prefer-stable": true,
     "repositories": [
         {
@@ -97,7 +97,7 @@
             "options": {
                 "symlink": true,
                 "versions": {
-                    "sympress/base-mu-plugins": "dev-main"
+                    "sympress/base-mu-plugins": "1.0.0"
                 }
             }
         },
