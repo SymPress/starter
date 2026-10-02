@@ -9,6 +9,20 @@ use Symfony\Component\Process\Process;
 
 final class TemplateHygieneTest extends TestCase
 {
+    public function testRootRequiresRuntimeWithTransientDatabaseStatusFix(): void
+    {
+        $composer = json_decode((string) file_get_contents($this->projectDir . '/composer.json'), true, flags: JSON_THROW_ON_ERROR);
+        self::assertSame('^1.1.3', $composer['require']['sympress/runtime']);
+        $lock = json_decode((string) file_get_contents($this->projectDir . '/composer.lock'), true, flags: JSON_THROW_ON_ERROR);
+        $packages = array_column($lock['packages'], null, 'name');
+        self::assertArrayHasKey('sympress/runtime', $packages);
+        $runtime = $packages['sympress/runtime'];
+        self::assertStringNotContainsString('dev', $runtime['version']);
+        self::assertTrue(version_compare(ltrim($runtime['version'], 'v'), '1.1.3', '>='));
+        self::assertSame('https://github.com/SymPress/runtime.git', $runtime['source']['url']);
+        self::assertStringStartsWith('https://api.github.com/repos/SymPress/runtime/zipball/', $runtime['dist']['url']);
+    }
+
     private string $projectDir;
 
     protected function setUp(): void
@@ -82,6 +96,33 @@ final class TemplateHygieneTest extends TestCase
         self::assertStringContainsString('WP_SITEURL=${WP_HOME}' . "\n", $process->getOutput());
     }
 
+    public function testSetupStoresPrivateGeneratedPasswordWithoutPrintingIt(): void
+    {
+        $root = sys_get_temp_dir() . '/sympress-setup-' . bin2hex(random_bytes(8));
+        mkdir($root . '/bin', 0700, true);
+        copy($this->projectDir . '/bin/console', $root . '/bin/console');
+        copy($this->projectDir . '/.env.example', $root . '/.env.example');
+        file_put_contents($root . '/bin/ddev', "#!/bin/sh\nexit 0\n");
+        chmod($root . '/bin/ddev', 0700);
+
+        try {
+            $process = new Process(
+                [PHP_BINARY, $root . '/bin/console', 'setup', 'private-password-test'],
+                $root,
+                ['PATH' => $root . '/bin:' . getenv('PATH')],
+            );
+            $process->mustRun();
+            $env = (string) file_get_contents($root . '/.env');
+            self::assertSame(1, preg_match('/^WP_ADMIN_PASSWORD=(.+)$/m', $env, $match));
+            self::assertGreaterThanOrEqual(24, strlen($match[1]));
+            self::assertNotSame('admin', $match[1]);
+            self::assertStringNotContainsString($match[1], $process->getOutput());
+            self::assertSame(0600, fileperms($root . '/.env') & 0777);
+        } finally {
+            (new \Symfony\Component\Filesystem\Filesystem())->remove($root);
+        }
+    }
+
     public function testCliManifestMatchesTheStarterContract(): void
     {
         $composer = json_decode(
@@ -100,7 +141,7 @@ final class TemplateHygieneTest extends TestCase
             $manifest['$schema'],
         );
         self::assertSame(1, $manifest['schemaVersion']);
-        self::assertSame('dev', $composer['minimum-stability'] ?? null);
+        self::assertSame('stable', $composer['minimum-stability'] ?? null);
         self::assertTrue($composer['prefer-stable'] ?? false);
         self::assertSame($composer['name'], $manifest['templates'][0]['packageName']);
         self::assertSame(['bin/console', 'setup', '{project_slug}'], $manifest['templates'][0]['setupCommand']);
@@ -112,16 +153,7 @@ final class TemplateHygieneTest extends TestCase
 
         $suggestionNames = array_column($manifest['packageSuggestions'], 'name');
         self::assertSame($suggestionNames, array_values(array_unique($suggestionNames)));
-        self::assertNotContains('sympress/consent', $suggestionNames);
-
-        $suggestions = array_column($manifest['packageSuggestions'], null, 'name');
-        foreach (['sympress/mailer', 'sympress/nginx-cache'] as $unpublishedPackage) {
-            self::assertSame('dev-main', $suggestions[$unpublishedPackage]['constraint'] ?? null);
-            self::assertSame(
-                'https://github.com/SymPress/' . substr($unpublishedPackage, strlen('sympress/')),
-                $suggestions[$unpublishedPackage]['repositoryUrl'] ?? null,
-            );
-        }
+        self::assertContains('sympress/consent', $suggestionNames);
 
         foreach ($manifest['packageSuggestions'] as $suggestion) {
             $suggestedProfiles = array_merge(

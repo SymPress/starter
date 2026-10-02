@@ -1,0 +1,11 @@
+[Unit]
+Description=Encrypted SymPress DB and uploads backup
+After=network-online.target
+[Service]
+Type=oneshot
+User=deploy
+Group=www-data
+ExecStart=/bin/sh -c 'exec /usr/bin/python3 /srv/sympress/current/dev-ops/operations.py --config /etc/sympress/operations.json backup "/srv/backups/sympress/$(date -u +%%Y%%m%%dT%%H%%M%%SZ).tar.gz.age"'
+UMask=0077
+NoNewPrivileges=true
+ProtectHome=true

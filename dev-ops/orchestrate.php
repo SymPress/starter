@@ -33,16 +33,17 @@ if (!$env->read(DbChecker::WPDB_EXISTS)) {
 
 // Build install command.
 $user = $env->read('WP_ADMIN_USERNAME') ?: 'admin';
-$pass = $env->read('WP_ADMIN_PASSWORD') ?: \bin2hex(\random_bytes(16));
+$pass = $env->read('WP_ADMIN_PASSWORD');
+
+if (!$pass || $pass === 'admin') {
+    $pass = \bin2hex(\random_bytes(24));
+}
 $home = $env->read('WP_HOME');
 $siteUrl = $env->read('WP_SITEURL') ?: $home;
-$email = "{$user}@admin.com";
+$email = $env->read('WP_ADMIN_EMAIL') ?: 'admin@example.invalid';
 
-if (!$env->read('WP_ADMIN_PASSWORD')) {
-    \fwrite(STDOUT, "Generated transient WordPress admin password: {$pass}\n");
-}
 $install = "wp core install";
-$install .= " --skip-packages";
+$install .= " --skip-packages --skip-email";
 $install .= " --title={$shellArg($config->title)} --url={$shellArg((string) $home)}";
 $install .= " --admin_user={$shellArg((string) $user)} --admin_password={$shellArg((string) $pass)} --admin_email={$shellArg($email)}";
 

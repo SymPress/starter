@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SymPress\Starter\Tests\BaseMuPlugins;
 
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Process\Process;
 
 final class MuPluginTemplateTest extends TestCase
 {
@@ -32,6 +33,30 @@ final class MuPluginTemplateTest extends TestCase
                 (string) file_get_contents($this->pluginDir . '/' . $file),
                 "{$file} should not execute outside WordPress.",
             );
+        }
+    }
+
+    public function testNativeDotenvAndExplicitHardeningPrecedence(): void
+    {
+        $bootstrap = <<<'PHP'
+        define('ABSPATH', '/disposable/');
+        $GLOBALS['registered'] = 0;
+        function add_action(...$arguments) { $GLOBALS['registered']++; }
+        function add_filter(...$arguments) { $GLOBALS['registered']++; }
+        function remove_action(...$arguments) {}
+        function remove_filter(...$arguments) {}
+        PHP;
+        foreach ([
+            ["putenv('SYMPRESS_ENABLE_WORDPRESS_HARDENING');", false],
+            ["putenv('SYMPRESS_ENABLE_WORDPRESS_HARDENING'); \$_ENV['SYMPRESS_ENABLE_WORDPRESS_HARDENING'] = 'true';", true],
+            ["putenv('SYMPRESS_ENABLE_WORDPRESS_HARDENING=true'); \$_ENV['SYMPRESS_ENABLE_WORDPRESS_HARDENING'] = 'false';", false],
+            ["\$_ENV['SYMPRESS_ENABLE_WORDPRESS_HARDENING'] = 'true'; define('SYMPRESS_ENABLE_WORDPRESS_HARDENING', false);", false],
+        ] as [$environment, $enabled]) {
+            $code = $bootstrap . $environment . 'require ' . var_export($this->pluginDir . '/disable.php', true)
+                . '; echo $GLOBALS["registered"];';
+            $process = new Process([PHP_BINARY, '-r', $code]);
+            $process->mustRun();
+            self::assertSame($enabled, (int) $process->getOutput() > 0);
         }
     }
 

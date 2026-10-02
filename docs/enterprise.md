@@ -92,11 +92,38 @@ Review these values before launch:
 
 ```dotenv
 WORDPRESS_ENV=production
+DISALLOW_FILE_EDIT=true
+DISALLOW_FILE_MODS=true
+DISALLOW_UNFILTERED_HTML=true
+ALLOW_UNFILTERED_UPLOADS=false
+FORCE_SSL_ADMIN=true
 WP_DEBUG=false
 WP_DEBUG_DISPLAY=false
+WP_HTTP_BLOCK_EXTERNAL=true
+WP_ALLOW_MULTISITE=false
+MULTISITE=false
 SYMPRESS_ENABLE_WORDPRESS_HARDENING=true
 SYMPRESS_ENABLE_VARDUMPER=false
 ```
+
+With `WP_HTTP_BLOCK_EXTERNAL=true`, use a narrow `WP_ACCESSIBLE_HOSTS` allowlist
+for Wordfence and every other approved outbound integration.
+
+## Security Boundary
+
+Composer audits use the Wordfence-backed WP Sec Adv feed, so Composer-managed
+WordPress core, plugin, and theme advisories are checked alongside Packagist
+dependencies. The two upstream-unpatched, all-version findings are narrowly
+waived with reasons in `composer.json` and remain visible in audit output. For
+critical production pipelines, replace the public feed URL with a self-hosted
+WP Sec Adv instance.
+
+The public starter does not require the unpublished `sympress/security` package.
+Native nginx/MU policies and Runtime production doctor provide the shipped gates.
+See [production operations](production-operations.md) for deploy, cache, encrypted
+backup, staging-sync and explicit monitoring recipient configuration. Wordfence or
+another approved service remains responsible for live WAF/malware response; no
+private feed service is assumed available by the template.
 
 ## Starter Operations
 

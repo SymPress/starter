@@ -11,19 +11,10 @@
     ],
     "require": {
         "php": "^8.5",
-        "sympress/kernel": "dev-main"
+        "sympress/kernel": "^1.1.1"
     },
-    "repositories": [
-        {
-            "type": "path",
-            "url": "./../*",
-            "options": {
-                "symlink": true
-            }
-        }
-    ],
     "require-dev": {
-        "sympress/coding-standards": "^1.0"
+        "sympress/coding-standards": "^1.1.1"
     },
     "scripts": {
         "cs": [
@@ -62,5 +53,6 @@
             "dev-main": "1.0.x-dev"
         }
     },
-    "prefer-stable": true
+    "prefer-stable": true,
+    "minimum-stability": "stable"
 }

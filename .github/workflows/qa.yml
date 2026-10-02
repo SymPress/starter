@@ -1,6 +1,8 @@
 name: QA
 
 on:
+  schedule:
+    - cron: '23 4 * * *'
   workflow_dispatch:
   push:
     branches:
@@ -9,10 +11,11 @@ on:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   qa:
-    uses: sympress/workflows/.github/workflows/sympress-qa.yml@b68ed03c15db6d2fac85d8345bc22a6229b4f4b2
+    uses: sympress/workflows/.github/workflows/sympress-qa.yml@177fa0d727b278d2103052ec77c102b4a4c492a0
     with:
       include_root: true
       package_glob: .github/no-composer-packages/*
@@ -21,3 +24,15 @@ jobs:
       SSH_KEY: ${{ secrets.COMPOSER_SSH_KEY }}
       SSH_KNOWN_HOSTS: ${{ secrets.COMPOSER_SSH_KNOWN_HOSTS }}
       COMPOSER_AUTH_JSON: ${{ secrets.COMPOSER_AUTH_JSON }}
+
+  operations-tests:
+    name: Operations safety tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        with:
+          persist-credentials: false
+      - name: Verify backup, restore and monitoring controls
+        run: python3 -m unittest discover -s dev-ops/tests -v

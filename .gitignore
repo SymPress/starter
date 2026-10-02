@@ -44,3 +44,11 @@ var
 ### IDE / OS
 .idea
 .DS_Store
+
+# Local credentials and operation artifacts
+auth.json
+.npmrc
+/.npm/
+/operations-state/
+/deployment/vendor/
+**/__pycache__/

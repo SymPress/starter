@@ -1,6 +1,8 @@
 name: DDEV Smoke
 
 on:
+  schedule:
+    - cron: '6 4 * * 3'
   workflow_dispatch:
   pull_request:
   push:
@@ -12,7 +14,7 @@ permissions:
 
 jobs:
   ddev-smoke:
-    uses: sympress/workflows/.github/workflows/ddev-playwright.yml@b68ed03c15db6d2fac85d8345bc22a6229b4f4b2
+    uses: sympress/workflows/.github/workflows/ddev-playwright.yml@8639b193c127039573a9a907f811db7c3574c23e
     with:
       php_version: '8.5'
       allow_custom_commands: true
@@ -23,7 +25,11 @@ jobs:
         primary_url="$(ddev describe -j | jq -r '.raw.primary_url // empty')"
         test -n "$primary_url"
         perl -0pi -e "s#https://sympress-starter\\.ddev\\.site#$primary_url#g" .env
-        ddev composer install
+        if [ "$GITHUB_EVENT_NAME" = "schedule" ]; then
+          ddev composer update --with-all-dependencies --no-interaction --no-scripts
+        fi
+        ddev composer install --no-interaction
+        ddev composer runtime:setup --no-interaction
       playwright_install_command: ':'
       playwright_run_command: |
         ddev exec wp core is-installed
