@@ -1,5 +1,9 @@
 # Production operations
 
+The pilot order is alarms and missing-run detection, then an owned site, then
+WooCommerce after the owned pilot passes. [Canary modes and external heartbeat](canaries.md)
+describe the P0 monitoring acceptance; passing push checks alone do not complete it.
+
 This recipe targets PHP 8.5 FPM, nginx, MariaDB and Composer-managed WordPress.
 It is executable, but hostname, Unix identities, SSH host keys, backup encryption
 recipient and notification recipient must be selected for the actual deployment.
@@ -68,10 +72,9 @@ DISABLE_WP_CRON=true
 Add the private DB connection and WordPress salts. Task-6 Runtime requires canonical
 `WP_HOME` for staging/production and trusts forwarded HTTPS only when the immediate
 `REMOTE_ADDR` matches `SYMPRESS_RUNTIME_TRUSTED_PROXIES` and the header is exactly
-`https`. Do not trust `X-Forwarded-For` as the peer address. Until the fixed Runtime
-release is published, these changes must be tested with the isolated reviewed
-package harness; `^1.1.1` is the public minimum, not a claim that v1.1.1 contains
-these subsequent fixes. The release train must pin the new fixed release.
+`https`. Do not trust `X-Forwarded-For` as the peer address. The committed stable
+Runtime requirement is `^1.1.3`; use its actual published lock revision and a
+current successful update canary instead of a historical candidate harness.
 
 Deployer uploads the built artifact, copies a private regular `.env` snapshot from shared storage, symlinks `public/wp-content/uploads`
 and `var/log`, creates release-specific `var/cache`, generates release-local Runtime configuration with installer commands skipped,
@@ -106,6 +109,12 @@ reload. Do not automatically restore the database for a code rollback; inspect
 migration compatibility and use an approved paired backup when restoration is
 needed. Five old releases are retained. Shared media/logs/.env survive rollbacks.
 
+Projects using database migrations require `sympress/migration:^1.0.3` or newer.
+Its WP-CLI commands reject `rollback`, `execute --down` and a backward `migrate`
+target outside `local`/`development`, before changing data or applied history.
+Missing or unknown WordPress environment also rejects these directions. Recovery
+uses an explicitly reviewed backup procedure; there is no CLI force bypass.
+
 ## nginx and cache policy
 
 Render the server recipe before installation:
@@ -120,7 +129,9 @@ include `cache-http.conf` once inside nginx `http {}` and `production-server.con
 in the site's enabled virtual hosts. Set the actual FPM socket/certificate paths,
 provision `/var/cache/nginx/wordpress` for nginx, run `nginx -t`, then reload only
 through the approved deployment mechanism. HTTP redirects to a literal canonical
-HTTPS hostname. HSTS applies only to the TLS site and deliberately omits
+HTTPS hostname. Enable HSTS only after certificate/chain, canonical redirect and
+HTTPS login/health acceptance. Until then omit the HSTS directives from the live
+TLS configuration. HSTS applies only to the accepted TLS site and deliberately omits
 `includeSubDomains`/`preload` until every subdomain is ready. Headers are repeated
 inside locations that declare their own `add_header` because nginx inheritance
 otherwise drops them. The baseline CSP limits `frame-ancestors`; extend it only
@@ -156,8 +167,9 @@ Enable only after testing with the final package set and budget memory from actu
 measurements. The kernel cache stays release-specific to avoid stale containers.
 
 The optional `sympress/framework-bundle` supplies a WordPress object-cache adapter.
-After the fixed package release, require its reviewed stable tag through Composer,
-then select exactly one drop-in owner. In `dev-ops/runtime.json`, add:
+The pilot default is Redis with that adapter from `^1.0.2`, exactly one drop-in
+owner and an independent site/environment secret. Keep the generic template
+optional; select this profile in the generated pilot project. In `dev-ops/runtime.json`, add:
 
 ```json
 "dropins": {"object-cache.php": "vendor/sympress/framework-bundle/dropin/object-cache.php"},
@@ -180,7 +192,9 @@ SYMPRESS_CACHE_SECRET=<independent-long-random-secret>
 
 Use a protected Redis endpoint and private ACL credentials in the DSN when needed;
 deny public Redis access and use verified TLS for network connections. Allocate a
-unique prefix for every site/environment. The fixed framework adapter reads native
+unique prefix for every site/environment. A prefix is not tenant isolation:
+use a separate customer Redis instance or an ACL that demonstrably restricts
+that customer's keys and commands. The fixed framework adapter reads native
 Runtime dotenv values without exporting them into child process environments and
 rejects legacy unsigned cache entries. Optional cache installation is not selected
 by this template without operator choice.
