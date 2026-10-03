@@ -1,0 +1,41 @@
+# Application image must contain the reviewed release, PHP-FPM and its extensions.
+# Bind FPM to 0.0.0.0:9000 as non-root; provide an upstream web server on runtime.
+services:
+  php:
+    image: ${SYMPRESS_RELEASE_IMAGE:?Set an immutable image digest}
+    user: "1000:1000"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      WORDPRESS_ENV: production
+      DB_HOST: database:3306
+      DB_USER: sympress_web
+      DB_PASSWORD_FILE: /run/secrets/database_password
+    volumes:
+      - uploads:/srv/sympress/public/wp-content/uploads
+      - cache:/srv/sympress/var/cache
+      - logs:/srv/sympress/var/log
+      - ./php-production.ini:/usr/local/etc/php/conf.d/99-sympress.ini:ro
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=64m,mode=1777
+      - /run:rw,noexec,nosuid,nodev,size=16m,mode=755
+    secrets: [database_password]
+    networks: [runtime]
+
+secrets:
+  database_password:
+    file: ${SYMPRESS_DB_SECRET_FILE:?Set the private web-user password file}
+
+volumes:
+  uploads:
+  cache:
+  logs:
+
+networks:
+  runtime:
+    internal: true
+
+# Attach nginx, database and the site's authenticated TLS Redis service to runtime.
+# No network here provides Internet access. Provision a reviewed egress proxy/rules
+# only for required hosts; do not attach PHP directly to an unrestricted network.

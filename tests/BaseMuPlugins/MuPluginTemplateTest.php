@@ -23,6 +23,7 @@ final class MuPluginTemplateTest extends TestCase
             'allowed-html-tags.php',
             'app-starter.php',
             'disable.php',
+            'legacy-cleanup.php',
             'global-functions.php',
             'vardumper-integration.php',
         ];
@@ -67,5 +68,24 @@ final class MuPluginTemplateTest extends TestCase
         self::assertStringNotContainsString('sys_get_temp_dir()', $source);
         self::assertStringNotContainsString('file_put_contents', $source);
         self::assertStringContainsString("require_once __DIR__ . '/global-functions.php';", $source);
+    }
+
+    public function testProductionHardeningDoesNotRegisterLegacyContentChanges(): void
+    {
+        $code = <<<'PHP'
+        define('ABSPATH', '/disposable/');
+        define('SYMPRESS_ENABLE_WORDPRESS_HARDENING', true);
+        $GLOBALS['hooks'] = [];
+        function add_action($hook, ...$arguments) { $GLOBALS['hooks'][] = $hook; }
+        function add_filter($hook, ...$arguments) { $GLOBALS['hooks'][] = $hook; }
+        function remove_action(...$arguments) {}
+        function remove_filter(...$arguments) {}
+        PHP;
+        $code .= 'require ' . var_export($this->pluginDir . '/disable.php', true) . ';';
+        $code .= 'require ' . var_export($this->pluginDir . '/legacy-cleanup.php', true) . ';';
+        $code .= 'echo json_encode($GLOBALS["hooks"]);';
+        $process = new Process([PHP_BINARY, '-r', $code]);
+        $process->mustRun();
+        self::assertSame(['rest_endpoints'], json_decode($process->getOutput(), true));
     }
 }

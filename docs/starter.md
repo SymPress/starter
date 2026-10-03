@@ -58,14 +58,20 @@ You can override these with `WP_ADMIN_USERNAME` and `WP_ADMIN_PASSWORD`.
 
 ## Optional Features
 
-The starter keeps opinionated behavior disabled by default:
+Production enables the Composer-managed Runtime hardening defaults. Local
+development and the separate legacy content cleanup remain opt-in:
 
 ```dotenv
-SYMPRESS_ENABLE_WORDPRESS_HARDENING=false
+SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=false
 SYMPRESS_ENABLE_VARDUMPER=false
 ```
 
-Set `SYMPRESS_ENABLE_WORDPRESS_HARDENING=true` to enable the cleanup and hardening hooks in `packages/base-mu-plugins/disable.php`.
+`SYMPRESS_ENABLE_WORDPRESS_HARDENING` removes the generator and hides the anonymous
+REST users endpoints in `disable.php`. It preserves feeds, comments, roles and
+block styles. `SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=true` enables the previous
+opinionated cleanup in `legacy-cleanup.php`; review it before enabling it.
+
+See [repository security controls](security-controls.md) for production boundaries.
 
 `SYMPRESS_ENABLE_VARDUMPER` enables the Symfony VarDumper integration in local development only. It is ignored outside `WORDPRESS_ENV=development`.
 
