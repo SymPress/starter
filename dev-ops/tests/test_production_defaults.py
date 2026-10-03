@@ -159,6 +159,8 @@ require $argv[1];
                             self.assertIn("object-src 'none'", response.headers['Content-Security-Policy-Report-Only'])
                             self.assertEqual(response.headers['Content-Security-Policy'], "frame-ancestors 'self'")
                             self.assertEqual(response.headers['Cross-Origin-Opener-Policy'], 'same-origin-allow-popups')
+                            self.assertEqual(response.headers['Permissions-Policy'],
+                                             'camera=(), microphone=(), geolocation=()')
                             self.assertEqual(response.headers.get_all('Strict-Transport-Security'),
                                              ['max-age=31536000'] if enabled else None)
                         break

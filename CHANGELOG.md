@@ -4,6 +4,10 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.1.1 — 2026-10-03
+
+- Preserve the browser's default payment permission so production headers do not disable checkout integrations using Payment Request.
+
 ## 1.1.0 — 2026-10-03
 
 - Use Runtime 1.2's Composer-managed production policy and lock the released Runtime, Monolog security-audit and Profiler storage-permission fixes. Private Security is not required or loaded.
