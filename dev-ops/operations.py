@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
+import time
 import urllib.error
 import urllib.request
 from urllib.parse import urlsplit
@@ -157,22 +158,43 @@ def monitor_logs(settings, prior):
         cursors = {str(paths[0]): prior}
     healthy = True
     files = {}
+    now = int(time.time())
+    seen = {key: stamp for key, stamp in prior.get('log_error_seen', {}).items()
+            if isinstance(stamp, int) and now - stamp < 86400}
     for path in paths:
         stat = path.stat()
         previous = cursors.get(str(path), {})
         offset = previous.get('offset', 0) if previous.get('inode') == stat.st_ino else 0
+        if not prior:
+            # First activation establishes a baseline rather than mailing historic incidents.
+            offset = stat.st_size
         if offset > stat.st_size:
             offset = 0
         with path.open('rb') as stream:
             stream.seek(offset)
-            tail = b''
-            while chunk := stream.read(65536):
-                text = (tail + chunk).lower()
-                healthy = healthy and not any(word in text for word in
-                    (b'php fatal', b'uncaught', b'.error:', b'.critical:'))
-                tail = text[-32:]
+            for line in stream:
+                text = line.lower()
+                category = next((word for word in
+                    (b'.critical:', b'.error:', b'php fatal', b'uncaught') if word in text), None)
+                if category is None:
+                    continue
+                # Retain only severity and PHP location, never exception text or credentials.
+                location = re.search(rb'(?:in |at |"file"\s*:\s*")([a-z0-9_./-]+\.php(?::| on line )\d+)', text)
+                source = location[1] if location else b'unknown-location'
+                if location is None:
+                    structured = re.search(rb'"file"\s*:\s*"([a-z0-9_./-]+\.php)"\s*,\s*"line"\s*:\s*(\d+)', text)
+                    if structured:
+                        source = structured[1] + b':' + structured[2]
+                source = re.sub(rb'/releases/[a-z0-9._-]+/', b'/releases/current/',
+                                source)
+                key = hashlib.sha256(category + source).hexdigest()
+                if key not in seen:
+                    healthy = False
+                    seen[key] = now
             files[str(path)] = {'offset': stream.tell(), 'inode': stat.st_ino}
-    return healthy, {'files': files} if settings.get('log_glob') else files[str(paths[0])]
+    state = {'files': files} if settings.get('log_glob') else files[str(paths[0])]
+    state['log_error_seen'] = dict(sorted(seen.items(), key=lambda item: item[1])[-256:])
+    return healthy, state
 
 
 class RejectHealthRedirect(urllib.request.HTTPRedirectHandler):

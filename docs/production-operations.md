@@ -84,7 +84,7 @@ Add the private DB connection and WordPress salts. Task-6 Runtime requires canon
 `WP_HOME` for staging/production and trusts forwarded HTTPS only when the immediate
 `REMOTE_ADDR` matches `SYMPRESS_RUNTIME_TRUSTED_PROXIES` and the header is exactly
 `https`. Do not trust `X-Forwarded-For` as the peer address. The committed stable
-Runtime requirement is `^1.1.3`; use its actual published lock revision and a
+Runtime requirement is recorded in `composer.json`; use its actual published lock revision and a
 current successful update canary instead of a historical candidate harness.
 
 Deployer uploads the built artifact, copies a private regular `.env` snapshot from shared storage, symlinks `public/wp-content/uploads`
@@ -94,10 +94,13 @@ checks that WordPress is already installed, then runs Runtime and
 `runtime doctor --production --database-health` and a real WP configuration/DB
 gate before atomically changing `current`. The recipe selects
 `SYMPRESS_KERNEL_IMMUTABLE_CACHE=true` with a unique nonempty
-`SYMPRESS_KERNEL_BUILD_ID=release-<release_name>` for every release; default
+`SYMPRESS_KERNEL_BUILD_ID=release-<source_commit>-<release_name>` in GitHub Actions
+(or `release-<release_name>` for a manual deployment) for every release; default
 content/listing checks remain active outside this explicit deployment policy. The source recipe never clones or
 builds on production. Failed pre-switch checks leave the current release active;
-`deploy:failed` unlocks. The database is not automatically migrated or rolled back.
+`deploy:failed` releases only the lock acquired by this deployment. A failure
+before acquiring the lock preserves any existing deployment lock. The database
+is not automatically migrated or rolled back.
 
 The deploy identity owns release files. The permission step assigns the selected
 PHP group, makes directories 0750 and code/config 0640 (executables 0750), makes
@@ -124,6 +127,20 @@ release without a Build-ID still reloads FPM, then explicitly fails verification
 A CLI `opcache_reset()` does not reset FPM or its preload state. Do not automatically restore the database for a code rollback; inspect
 migration compatibility and use an approved paired backup when restoration is
 needed. Five old releases are retained. Shared media/logs/.env survive rollbacks.
+
+The isolated regression below runs native Deployer 8 worker processes and its
+actual symlink and failure hooks against a temporary deployment and an owned
+PHP-FPM pool. It checks foreign lock preservation before locking and on a lock
+conflict, then injects failures before publication and during reload and OPcache
+reset. It verifies the old release through FastCGI and proves releasing the owned
+lock even when recovery itself fails. The WP-CLI HTTPS transport is a fixture double; the FPM
+execution and Deployer state transfer are real.
+
+```sh
+python3 dev-ops/tests/failed_deploy_probe.py --deployer deployment/vendor/bin/dep
+# qa:operations includes this fixture when that binary and PHP-FPM 8.5 exist;
+# SYMPRESS_DEPLOYER_PROBE selects an installed Deployer binary elsewhere.
+```
 
 Projects using database migrations require `sympress/migration:^1.0.3` or newer.
 Its WP-CLI commands reject `rollback`, `execute --down` and a backward `migrate`
@@ -310,13 +327,22 @@ python3 /usr/local/lib/sympress/operations.py --config /etc/sympress/monitor.jso
 # Approved operator installs units/config and enables both reviewed timers.
 ```
 
-`Canary failure notification` watches completed main-branch DDEV runs from this
-repository and creates an assigned GitHub issue on failure. Set repository variable
-`CI_ALERT_RECIPIENT` to the selected GitHub login before enabling delivery; missing
-recipient fails explicitly. The workflow checks no PR code and receives only
-`issues:write`. The canary itself runs the current locked install and scheduled
-current-dependency updates; failures are never converted to success. No alert,
-deployment, purge or live restore was executed as part of creating this recipe.
+Canary runs verify the locked install and scheduled dependency updates. They do
+not use heartbeat services or create alert issues. Their failures remain visible
+in GitHub Actions.
+
+The first log-monitor run establishes a cursor at the end of existing logs.
+Subsequent runs report new error severity/PHP locations once per 24 hours while
+repeated occurrences continue. Only hashes of severity and PHP location are kept,
+without error messages or credentials. A failed notification remains pending.
+
+Deployment tools and this recipe are loaded from a fresh trusted checkout.
+`SYMPRESS_RELEASE_DIRECTORY` points to the separately verified payload, which is
+uploaded as data. The private shared environment is copied into the release;
+`SYMPRESS_PROJECT_DIR` is set to the stable deployment base. Build IDs include
+the source commit when GitHub supplies it. A failure after the symlink switch
+restores the previous release and refreshes FPM; first deployments have no
+previous release to restore.
 
 ## Primary references
 

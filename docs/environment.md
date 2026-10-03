@@ -58,15 +58,14 @@ WP_ADMIN_PASSWORD=
 ## SymPress Starter Flags
 
 ```dotenv
-SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=false
 SYMPRESS_ENABLE_VARDUMPER=false
 ```
 
-`SYMPRESS_ENABLE_WORDPRESS_HARDENING` enables generator removal and anonymous REST
-users protection in `disable.php`; the Composer-managed production profile enables
-it by default. It does not remove content features. Set
-`SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=true` explicitly to enable the old content
-cleanup hooks in `legacy-cleanup.php`.
+The optional REST/generator and legacy cleanup hooks have moved to the private
+Security package, which Starter does not install. `APP_SECRET` (at least 32 bytes)
+signs persistent cache values; setup generates a private key once and preserves
+existing keys. `SYMPRESS_PROJECT_DIR` identifies the stable project base, and the
+deploy recipe overrides it with the deployment base rather than a release path.
 
 `SYMPRESS_ENABLE_VARDUMPER` enables the Symfony VarDumper integration in development only. It is ignored outside `WORDPRESS_ENV=development`.
 

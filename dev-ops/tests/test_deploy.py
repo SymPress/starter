@@ -1,12 +1,70 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
 
+NATIVE_DEPLOYER = Path(os.environ.get('SYMPRESS_DEPLOYER_PROBE',
+                                    str(Path(__file__).parents[2] / 'deployment/vendor/bin/dep')))
+
 
 class DeployTest(unittest.TestCase):
+    @unittest.skipUnless(NATIVE_DEPLOYER.is_file() and shutil.which('php-fpm8.5') and shutil.which('cgi-fcgi'),
+                         'Native recovery fixture requires installed Deployer 8 and PHP-FPM 8.5.')
+    def test_native_workers_restore_published_release_and_unlock_after_refresh_failures(self):
+        from failed_deploy_probe import run_case
+        for failure in ('reload', 'reset', 'recovery_reset'):
+            with self.subTest(failure=failure):
+                evidence = run_case(Path(__file__).parents[2], NATIVE_DEPLOYER.resolve(), 'php-fpm8.5', failure)
+                self.assertEqual(evidence['current'], 'old')
+                self.assertEqual(evidence['fpm_build'], 'old')
+                self.assertTrue(evidence['unlocked'])
+
+    @unittest.skipUnless(NATIVE_DEPLOYER.is_file() and shutil.which('php-fpm8.5') and shutil.which('cgi-fcgi'),
+                         'Native lock fixture requires installed Deployer 8 and PHP-FPM 8.5.')
+    def test_native_workers_preserve_foreign_lock_and_release_own_lock_before_publication(self):
+        from failed_deploy_probe import run_case
+        for failure in ('before_lock', 'lock_conflict', 'before_switch'):
+            with self.subTest(failure=failure):
+                evidence = run_case(Path(__file__).parents[2], NATIVE_DEPLOYER.resolve(), 'php-fpm8.5', failure)
+                self.assertFalse(evidence['published_new'])
+                self.assertEqual(evidence['current'], 'old')
+                self.assertEqual(evidence['unlocked'], failure == 'before_switch')
+
+    def test_payload_is_upload_data_and_recipe_tools_remain_trusted(self):
+        with tempfile.TemporaryDirectory() as directory:
+            payload = Path(directory)
+            (payload / 'vendor').mkdir()
+            (payload / 'public/wp').mkdir(parents=True)
+            (payload / 'vendor/autoload.php').write_text('<?php throw new Exception("poison");')
+            (payload / 'public/wp/wp-load.php').write_text('<?php throw new Exception("poison");')
+            result = self.probe('deploy:upload', SYMPRESS_RELEASE_DIRECTORY=directory)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)['uploads'][0]['source'], directory + '/')
+
+    def test_refresh_failure_can_restore_only_a_previously_published_release(self):
+        environment = {'DEPLOY_PATH': '/srv/fixture', 'PROBE_PREVIOUS_RELEASE': '/srv/fixture/releases/old'}
+        untouched = self.probe('deploy:recover-published', **environment)
+        self.assertNotIn('unlock', json.loads(untouched.stdout)['commands'])
+        self.assertFalse(any('mv -Tf' in command for command in json.loads(untouched.stdout)['commands']))
+        owned = self.probe('deploy:recover-published', PROBE_LOCK_ACQUIRED='1', **environment)
+        self.assertEqual(json.loads(owned.stdout)['commands'][-1], 'unlock')
+        restored = self.probe('deploy:recover-published', PROBE_PUBLISHED='1', PROBE_LOCK_ACQUIRED='1', **environment)
+        self.assertEqual(restored.returncode, 0, restored.stderr)
+        commands = json.loads(restored.stdout)['commands']
+        self.assertTrue(any('mv -Tf' in command and '/releases/old' in command for command in commands))
+        self.assertTrue(any('systemctl reload' in command for command in commands))
+        self.assertEqual(commands[-1], 'unlock')
+
+    def test_release_identity_uses_commit_and_stable_deployment_base(self):
+        result = self.probe('deploy:environment', DEPLOY_PATH='/srv/fixture', GITHUB_SHA='a' * 40)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        command = json.loads(result.stdout)['commands'][-1]
+        self.assertIn('release-' + 'a' * 40 + '-42', command)
+        self.assertIn('SYMPRESS_PROJECT_DIR=/srv/fixture', command)
+
     def probe(self, mode='graph', **environment):
         with tempfile.TemporaryDirectory() as directory:
             recipe = Path(directory) / 'recipe'
@@ -29,6 +87,7 @@ class DeployTest(unittest.TestCase):
         self.assertIn('deploy:fpm-check', recipe['hooks']['before']['rollback'])
         self.assertIn('deploy:prepare-tools', recipe['hooks']['before']['rollback'])
         self.assertIn('deploy:refresh', recipe['hooks']['after']['rollback'])
+        self.assertEqual(recipe['hooks']['after']['deploy:lock'], ['deploy:mark-locked'])
         self.assertEqual(recipe['refresh'], ['deploy:fpm-reload', 'deploy:opcache-reset', 'deploy:published-health'])
 
     def test_reload_uses_noninteractive_sudo_and_checks_service(self):

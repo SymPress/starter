@@ -58,18 +58,15 @@ You can override these with `WP_ADMIN_USERNAME` and `WP_ADMIN_PASSWORD`.
 
 ## Optional Features
 
-Production enables the Composer-managed Runtime hardening defaults. Local
-development and the separate legacy content cleanup remain opt-in:
+Production enables the Composer-managed Runtime configuration defaults.
+Local debugging remains opt-in:
 
 ```dotenv
-SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=false
 SYMPRESS_ENABLE_VARDUMPER=false
 ```
 
-`SYMPRESS_ENABLE_WORDPRESS_HARDENING` removes the generator and hides the anonymous
-REST users endpoints in `disable.php`. It preserves feeds, comments, roles and
-block styles. `SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=true` enables the previous
-opinionated cleanup in `legacy-cleanup.php`; review it before enabling it.
+The former generator/REST hardening and legacy cleanup hooks now belong to the
+private Security package. It is not installed in Starter.
 
 See [repository security controls](security-controls.md) for production boundaries.
 

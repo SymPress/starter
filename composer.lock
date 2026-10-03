@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d0ad92d7a012ebe73c84312f2543a544",
+    "content-hash": "51c166d461c93beaa6bdd66ed01f4b8d",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -4819,16 +4819,16 @@
         },
         {
             "name": "sympress/kernel",
-            "version": "v1.1.3",
+            "version": "v1.1.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/kernel.git",
-                "reference": "ed83314fda5210b756dd4984edcba405870ff5bb"
+                "reference": "86579402cc49a86e73f6326bb014742476cd4334"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/kernel/zipball/ed83314fda5210b756dd4984edcba405870ff5bb",
-                "reference": "ed83314fda5210b756dd4984edcba405870ff5bb",
+                "url": "https://api.github.com/repos/SymPress/kernel/zipball/86579402cc49a86e73f6326bb014742476cd4334",
+                "reference": "86579402cc49a86e73f6326bb014742476cd4334",
                 "shasum": ""
             },
             "require": {
@@ -4879,22 +4879,22 @@
             "description": "WordPress kernel and shared service container built on Symfony DependencyInjection.",
             "support": {
                 "issues": "https://github.com/SymPress/kernel/issues",
-                "source": "https://github.com/SymPress/kernel/tree/v1.1.3"
+                "source": "https://github.com/SymPress/kernel/tree/v1.1.4"
             },
-            "time": "2026-10-02T20:13:41+00:00"
+            "time": "2026-10-03T14:08:12+00:00"
         },
         {
             "name": "sympress/monolog-bundle",
-            "version": "v1.1.0",
+            "version": "v1.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/monolog-bundle.git",
-                "reference": "b7b7130cb74b0a18b967f37013bf77c48ac70bb6"
+                "reference": "f9b5ece3bfb87215dabb321d703990a4307c3f4e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/monolog-bundle/zipball/b7b7130cb74b0a18b967f37013bf77c48ac70bb6",
-                "reference": "b7b7130cb74b0a18b967f37013bf77c48ac70bb6",
+                "url": "https://api.github.com/repos/SymPress/monolog-bundle/zipball/f9b5ece3bfb87215dabb321d703990a4307c3f4e",
+                "reference": "f9b5ece3bfb87215dabb321d703990a4307c3f4e",
                 "shasum": ""
             },
             "require": {
@@ -4935,27 +4935,27 @@
             "description": "Monolog integration bundle for the WordPress kernel.",
             "support": {
                 "issues": "https://github.com/SymPress/monolog-bundle/issues",
-                "source": "https://github.com/SymPress/monolog-bundle/tree/v1.1.0"
+                "source": "https://github.com/SymPress/monolog-bundle/tree/v1.1.3"
             },
-            "time": "2026-10-03T12:19:51+00:00"
+            "time": "2026-10-03T16:53:23+00:00"
         },
         {
             "name": "sympress/runtime",
-            "version": "v1.2.0",
+            "version": "v1.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/runtime.git",
-                "reference": "1f55bfd311631f7bd1912c7f0162d18e379fb051"
+                "reference": "ef4d1dd975b19f234d5caface8319fda0a357a41"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/runtime/zipball/1f55bfd311631f7bd1912c7f0162d18e379fb051",
-                "reference": "1f55bfd311631f7bd1912c7f0162d18e379fb051",
+                "url": "https://api.github.com/repos/SymPress/runtime/zipball/ef4d1dd975b19f234d5caface8319fda0a357a41",
+                "reference": "ef4d1dd975b19f234d5caface8319fda0a357a41",
                 "shasum": ""
             },
             "require": {
                 "composer-plugin-api": "^2.6",
-                "composer/composer": "^2.10.3",
+                "composer/composer": "~2.10.3",
                 "composer/semver": "^3.4",
                 "opis/json-schema": "^2.6",
                 "php": "^8.5",
@@ -4968,11 +4968,12 @@
                 "symfony/process": "^8.1"
             },
             "conflict": {
-                "symfony/event-dispatcher-contracts": "<3.4.2"
+                "symfony/event-dispatcher-contracts": "<3.4.2",
+                "sympress/kernel": "<1.1.4"
             },
             "require-dev": {
                 "phpunit/phpunit": "^13.0",
-                "sympress/kernel": "^1.1.1",
+                "sympress/kernel": "^1.1.4",
                 "sympress/qa": "^0.1.2"
             },
             "suggest": {
@@ -4989,7 +4990,7 @@
                     "bundle": "SymPress\\Runtime\\Bridge\\Kernel\\RuntimeBundle"
                 },
                 "branch-alias": {
-                    "dev-main": "1.1.x-dev"
+                    "dev-main": "1.2.x-dev"
                 }
             },
             "autoload": {
@@ -5015,7 +5016,7 @@
                 "issues": "https://github.com/SymPress/runtime/issues",
                 "source": "https://github.com/SymPress/runtime"
             },
-            "time": "2026-10-03T12:20:36+00:00"
+            "time": "2026-10-03T17:01:01+00:00"
         },
         {
             "name": "sympress/wp-cli-console",
@@ -7828,16 +7829,16 @@
         },
         {
             "name": "sympress/profiler",
-            "version": "v1.0.3",
+            "version": "v1.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/profiler.git",
-                "reference": "b198b06b47b0f6660838c575aaea15bc6261ded8"
+                "reference": "e34627273e3443dd30eaea05720da6b82968d717"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/profiler/zipball/b198b06b47b0f6660838c575aaea15bc6261ded8",
-                "reference": "b198b06b47b0f6660838c575aaea15bc6261ded8",
+                "url": "https://api.github.com/repos/SymPress/profiler/zipball/e34627273e3443dd30eaea05720da6b82968d717",
+                "reference": "e34627273e3443dd30eaea05720da6b82968d717",
                 "shasum": ""
             },
             "require": {
@@ -7879,9 +7880,9 @@
             "description": "Profiler and web debug toolbar for the WordPress kernel.",
             "support": {
                 "issues": "https://github.com/SymPress/profiler/issues",
-                "source": "https://github.com/SymPress/profiler/tree/v1.0.3"
+                "source": "https://github.com/SymPress/profiler/tree/v1.0.4"
             },
-            "time": "2026-10-03T12:19:47+00:00"
+            "time": "2026-10-03T16:11:43+00:00"
         },
         {
             "name": "szepeviktor/phpstan-wordpress",

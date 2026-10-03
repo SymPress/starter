@@ -17,10 +17,15 @@ does not restrict raw sockets; the container network or hosting firewall must do
 implemented in `deploy.php`. Private Security CLI checks remain deferred while its
 integration is prohibited.
 
-Production hardening in the base MU package preserves comments, feeds, user roles
-and block styles. Previous opinionated cleanup now requires the separate
-`SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=true` flag. Explicit hardening overrides
-must be reviewed; copying the development example does not force hardening off.
+The former `disable.php` and `legacy-cleanup.php` hooks belong to the private
+Security package. Starter does not install that package or provide its enumeration
+guard. Runtime production configuration and the public upload/XML-RPC policies
+remain active. Review explicit hardening overrides.
+
+Setup generates a private 64-character `APP_SECRET` when no key or key file is
+configured. Existing values are preserved; use `runtime doctor --production` to
+diagnose weak keys. `SYMPRESS_PROJECT_DIR` is the literal stable deployment base
+for cache identity; `deploy.php` sets it independently of `releases/N`.
 
 The nginx template observes a broader CSP in report-only mode, keeps the enforced
 frame-ancestors rule, and sends Permissions-Policy and COOP. Collect violations in

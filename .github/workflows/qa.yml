@@ -11,11 +11,10 @@ on:
 
 permissions:
   contents: read
-  security-events: write
 
 jobs:
   qa:
-    uses: sympress/workflows/.github/workflows/sympress-qa.yml@d38b2d9e40eb5b0cdcb84102761af748e3d155b8
+    uses: sympress/workflows/.github/workflows/sympress-qa.yml@cd809f3986df3ea617d2d26bdf21ab69cae19c1e
     with:
       include_root: true
       package_glob: .github/no-composer-packages/*

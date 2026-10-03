@@ -102,11 +102,47 @@ task('deploy:published-health', static function (): void {
 
 task('deploy:refresh', ['deploy:fpm-reload', 'deploy:opcache-reset', 'deploy:published-health']);
 
+task('deploy:remember-current', static function (): void {
+    set('sympress_published', false);
+    $previous = test('test -L {{current_path}}') ? trim(run('readlink -f {{current_path}}')) : '';
+    if ($previous !== '' && !preg_match('~^' . preg_quote(get('deploy_path'), '~') . '/releases/[A-Za-z0-9._-]+$~D', $previous)) {
+        throw new \RuntimeException('Current release must be inside the deployment release directory.');
+    }
+    set('sympress_previous_release', $previous);
+});
+
+task('deploy:mark-published', static function (): void {
+    set('sympress_published', true);
+});
+
+task('deploy:mark-locked', static function (): void {
+    set('sympress_lock_acquired', true);
+});
+
+task('deploy:recover-published', static function (): void {
+    try {
+        if (get('sympress_published', false) && get('sympress_previous_release', '') !== '') {
+            $previous = escapeshellarg(get('sympress_previous_release'));
+            $temporary = '{{deploy_path}}/.sympress-recover-' . bin2hex(random_bytes(8));
+            run('ln -s ' . $previous . ' ' . $temporary . ' && mv -Tf ' . $temporary . ' {{current_path}}');
+            invoke('deploy:refresh');
+        }
+    } finally {
+        // A pre-lock failure must preserve another deployment's existing lock.
+        if (get('sympress_lock_acquired', false)) {
+            invoke('deploy:unlock');
+            set('sympress_lock_acquired', false);
+        }
+    }
+});
+
 task('deploy:upload', static function (): void {
-    if (!is_file(__DIR__ . '/vendor/autoload.php') || !is_file(__DIR__ . '/public/wp/wp-load.php')) {
+    // Tools and recipe come from the trusted checkout; the verified artifact is upload data.
+    $payload = getenv('SYMPRESS_RELEASE_DIRECTORY') ?: __DIR__;
+    if (!is_dir($payload) || !is_file($payload . '/vendor/autoload.php') || !is_file($payload . '/public/wp/wp-load.php')) {
         throw new \RuntimeException('Build and run composer runtime:setup before loading deploy credentials.');
     }
-    upload(__DIR__ . '/', '{{release_path}}', ['options' => [
+    upload(rtrim($payload, '/') . '/', '{{release_path}}', ['options' => [
         '--exclude=.git', '--exclude=.env*', '--exclude=auth.json', '--exclude=.npmrc',
         '--exclude=node_modules', '--exclude=.npm', '--exclude=.cache',
         '--exclude=.ddev', '--exclude=.github', '--exclude=operations-state', '--exclude=var',
@@ -117,11 +153,13 @@ task('deploy:upload', static function (): void {
 task('deploy:environment', static function (): void {
     // Doctor rejects symlinked env artifacts: snapshot the private shared secret.
     run('install -m 0600 {{deploy_path}}/shared/.env {{release_path}}/.env');
-    $buildId = 'release-' . get('release_name');
+    $commit = getenv('GITHUB_SHA') ?: '';
+    $buildId = 'release-' . (preg_match('/^[a-f0-9]{40}$/D', $commit) ? $commit . '-' : '') . get('release_name');
     if (!preg_match('/^[A-Za-z0-9._-]+$/D', $buildId)) {
         throw new \RuntimeException('Invalid immutable deployment build ID.');
     }
-    run('printf ' . escapeshellarg("\nSYMPRESS_KERNEL_IMMUTABLE_CACHE=true\nSYMPRESS_KERNEL_BUILD_ID=" . $buildId . "\n") . ' >> {{release_path}}/.env');
+    run('printf ' . escapeshellarg("\nSYMPRESS_KERNEL_IMMUTABLE_CACHE=true\nSYMPRESS_KERNEL_BUILD_ID=" . $buildId
+        . "\nSYMPRESS_PROJECT_DIR=" . get('deploy_path') . "\n") . ' >> {{release_path}}/.env');
 });
 
 task('deploy:runtime', static function (): void {
@@ -170,6 +208,9 @@ task('deploy', [
     'deploy:runtime', 'deploy:permissions', 'deploy:health', 'deploy:symlink', 'deploy:refresh', 'deploy:cleanup', 'deploy:unlock',
 ]);
 before('rollback', 'deploy:fpm-check');
+before('deploy:symlink', 'deploy:remember-current');
+after('deploy:symlink', 'deploy:mark-published');
 before('rollback', 'deploy:prepare-tools');
 after('rollback', 'deploy:refresh');
-after('deploy:failed', 'deploy:unlock');
+after('deploy:failed', 'deploy:recover-published');
+after('deploy:lock', 'deploy:mark-locked');
