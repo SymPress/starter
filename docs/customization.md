@@ -15,14 +15,15 @@ This updates DDEV and `.env` for the local project URL.
 Optional starter behavior is controlled through `.env`:
 
 ```dotenv
-SYMPRESS_ENABLE_WORDPRESS_HARDENING=false
+SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=false
 SYMPRESS_ENABLE_VARDUMPER=false
 ```
 
-Enable hardening only when the project wants the opinionated WordPress cleanup hooks:
+Production hardening preserves the normal WordPress content features. Enable the
+separate legacy cleanup only after reviewing its feed, role and block-style changes:
 
 ```dotenv
-SYMPRESS_ENABLE_WORDPRESS_HARDENING=true
+SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=true
 ```
 
 Disable the development VarDumper integration for shared or production-like environments:

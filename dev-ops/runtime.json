@@ -1,6 +1,7 @@
 {
     "compatibility": false,
     "compatibility-profile": "native",
+    "composer-managed": "auto",
     "env-local-overrides": false,
     "env-example": false,
     "register-theme-folder": false,

@@ -58,11 +58,15 @@ WP_ADMIN_PASSWORD=
 ## SymPress Starter Flags
 
 ```dotenv
-SYMPRESS_ENABLE_WORDPRESS_HARDENING=false
+SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=false
 SYMPRESS_ENABLE_VARDUMPER=false
 ```
 
-`SYMPRESS_ENABLE_WORDPRESS_HARDENING` enables the opinionated cleanup and hardening hooks in `packages/base-mu-plugins/disable.php`.
+`SYMPRESS_ENABLE_WORDPRESS_HARDENING` enables generator removal and anonymous REST
+users protection in `disable.php`; the Composer-managed production profile enables
+it by default. It does not remove content features. Set
+`SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=true` explicitly to enable the old content
+cleanup hooks in `legacy-cleanup.php`.
 
 `SYMPRESS_ENABLE_VARDUMPER` enables the Symfony VarDumper integration in development only. It is ignored outside `WORDPRESS_ENV=development`.
 

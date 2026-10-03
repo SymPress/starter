@@ -152,8 +152,13 @@ require $argv[1];
                             self.assertEqual(response.status, 200)
                             self.assertEqual(response.read(), b'private-header-fixture')
                             for name in ('X-Content-Type-Options', 'X-Frame-Options',
-                                         'Content-Security-Policy', 'Referrer-Policy'):
+                                         'Content-Security-Policy', 'Referrer-Policy',
+                                         'Content-Security-Policy-Report-Only',
+                                         'Permissions-Policy', 'Cross-Origin-Opener-Policy'):
                                 self.assertIsNotNone(response.headers.get(name), name)
+                            self.assertIn("object-src 'none'", response.headers['Content-Security-Policy-Report-Only'])
+                            self.assertEqual(response.headers['Content-Security-Policy'], "frame-ancestors 'self'")
+                            self.assertEqual(response.headers['Cross-Origin-Opener-Policy'], 'same-origin-allow-popups')
                             self.assertEqual(response.headers.get_all('Strict-Transport-Security'),
                                              ['max-age=31536000'] if enabled else None)
                         break
