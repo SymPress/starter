@@ -15,16 +15,11 @@ This updates DDEV and `.env` for the local project URL.
 Optional starter behavior is controlled through `.env`:
 
 ```dotenv
-SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=false
 SYMPRESS_ENABLE_VARDUMPER=false
 ```
 
-Production hardening preserves the normal WordPress content features. Enable the
-separate legacy cleanup only after reviewing its feed, role and block-style changes:
-
-```dotenv
-SYMPRESS_ENABLE_WORDPRESS_LEGACY_CLEANUP=true
-```
+The former REST/generator hardening and legacy cleanup hooks have moved to the
+private Security package. Starter does not install it.
 
 Disable the development VarDumper integration for shared or production-like environments:
 

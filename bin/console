@@ -185,6 +185,7 @@ function starterSetup(string $projectDir, array $args): int
     }
 
     chmod($envFile, 0600);
+    require $projectDir . '/dev-ops/prepare-env.php';
 
     $exitCode = runProcess(
         [

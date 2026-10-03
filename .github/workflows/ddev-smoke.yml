@@ -19,22 +19,21 @@ permissions:
 
 jobs:
   ddev-smoke:
-    uses: sympress/workflows/.github/workflows/ddev-playwright.yml@d38b2d9e40eb5b0cdcb84102761af748e3d155b8
+    uses: sympress/workflows/.github/workflows/ddev-playwright.yml@cd809f3986df3ea617d2d26bdf21ab69cae19c1e
     with:
+      checkout_ref: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update_dependencies)) && 'v1.1.2' || '' }}
       php_version: '8.5'
+      composer_update: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update_dependencies) }}
       allow_custom_commands: true
-      ddev_start_command: ':'
       setup_command: |
         set -euo pipefail
         cp .env.example .env
-        ddev start
+        ddev exec php dev-ops/prepare-env.php
         primary_url="$(ddev describe -j | jq -r '.raw.primary_url // empty')"
         test -n "$primary_url"
         perl -0pi -e "s#https://sympress-starter\\.ddev\\.site#$primary_url#g" .env
         canary_mode="$(bash .github/scripts/canary-mode.sh)"
-        if [ "$canary_mode" = "update" ]; then
-          ddev composer update --with-all-dependencies --no-interaction --no-scripts --no-plugins
-        fi
+        printf 'Canary dependency mode: %s\n' "$canary_mode"
         ddev composer install --no-interaction
         ddev composer runtime:setup --no-interaction
       playwright_install_command: ':'

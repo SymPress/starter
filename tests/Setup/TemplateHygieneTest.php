@@ -12,13 +12,13 @@ final class TemplateHygieneTest extends TestCase
     public function testRootRequiresReleasedRuntimeWithProductionHardening(): void
     {
         $composer = json_decode((string) file_get_contents($this->projectDir . '/composer.json'), true, flags: JSON_THROW_ON_ERROR);
-        self::assertSame('^1.2.0', $composer['require']['sympress/runtime']);
+        self::assertSame('^1.2.2', $composer['require']['sympress/runtime']);
         $lock = json_decode((string) file_get_contents($this->projectDir . '/composer.lock'), true, flags: JSON_THROW_ON_ERROR);
         $packages = array_column($lock['packages'], null, 'name');
         self::assertArrayHasKey('sympress/runtime', $packages);
         $runtime = $packages['sympress/runtime'];
         self::assertStringNotContainsString('dev', $runtime['version']);
-        self::assertTrue(version_compare(ltrim($runtime['version'], 'v'), '1.2.0', '>='));
+        self::assertTrue(version_compare(ltrim($runtime['version'], 'v'), '1.2.2', '>='));
         self::assertSame('https://github.com/SymPress/runtime.git', $runtime['source']['url']);
         self::assertStringStartsWith('https://api.github.com/repos/SymPress/runtime/zipball/', $runtime['dist']['url']);
     }
@@ -100,6 +100,8 @@ final class TemplateHygieneTest extends TestCase
     {
         $root = sys_get_temp_dir() . '/sympress-setup-' . bin2hex(random_bytes(8));
         mkdir($root . '/bin', 0700, true);
+        mkdir($root . '/dev-ops', 0700);
+        copy($this->projectDir . '/dev-ops/prepare-env.php', $root . '/dev-ops/prepare-env.php');
         copy($this->projectDir . '/bin/console', $root . '/bin/console');
         copy($this->projectDir . '/.env.example', $root . '/.env.example');
         file_put_contents($root . '/bin/ddev', "#!/bin/sh\nexit 0\n");
@@ -118,6 +120,11 @@ final class TemplateHygieneTest extends TestCase
             self::assertNotSame('admin', $match[1]);
             self::assertStringNotContainsString($match[1], $process->getOutput());
             self::assertSame(0600, fileperms($root . '/.env') & 0777);
+            self::assertSame(1, preg_match('/^APP_SECRET=([a-f0-9]{64})$/m', $env, $secret));
+            self::assertStringNotContainsString($secret[1], $process->getOutput());
+            self::assertStringContainsString("SYMPRESS_PROJECT_DIR='" . $root . "'", $env);
+            $process->mustRun();
+            self::assertStringContainsString('APP_SECRET=' . $secret[1], (string) file_get_contents($root . '/.env'));
         } finally {
             (new \Symfony\Component\Filesystem\Filesystem())->remove($root);
         }

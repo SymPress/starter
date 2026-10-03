@@ -11,16 +11,19 @@ $hooks = [];
 $commands = [];
 $uploads = [];
 function set(string $key, mixed $value): void { $GLOBALS['settings'][$key] = $value; }
-function get(string $key): mixed { return $GLOBALS['settings'][$key]; }
+function get(string $key, mixed $default = null): mixed { return $GLOBALS['settings'][$key] ?? $default; }
 function host(string $stage): object {
     return new class {
-        public function __call(string $method, array $arguments): self { return $this; }
+        public function __call(string $method, array $arguments): self {
+            if ($method === 'set') { set($arguments[0], $arguments[1]); }
+            return $this;
+        }
     };
 }
 function task(string $name, mixed $action): void { $GLOBALS['tasks'][$name] = $action; }
 function before(string $task, string $hook): void { $GLOBALS['hooks']['before'][$task][] = $hook; }
 function after(string $task, string $hook): void { $GLOBALS['hooks']['after'][$task][] = $hook; }
-function run(string $command): void {
+function run(string $command): string {
     $GLOBALS['commands'][] = $command;
     if (getenv('PROBE_FAIL_RELOAD') && str_contains($command, 'systemctl reload')) {
         throw new \RuntimeException('Simulated reload failure.');
@@ -28,6 +31,12 @@ function run(string $command): void {
     if (getenv('PROBE_FAIL_RESET') && str_contains($command, 'cgi-fcgi')) {
         throw new \RuntimeException('Simulated reset failure.');
     }
+    return str_contains($command, 'readlink') ? (getenv('PROBE_PREVIOUS_RELEASE') ?: '') : '';
+}
+function test(string $command): bool { return getenv('PROBE_PREVIOUS_RELEASE') !== false; }
+function invoke(string $name): void {
+    if ($name === 'deploy:unlock') { $GLOBALS['commands'][] = 'unlock'; return; }
+    runTask($name);
 }
 function upload(string $source, string $destination): void {
     $GLOBALS['uploads'][] = ['source' => $source, 'destination' => $destination];
@@ -46,6 +55,12 @@ function runTask(string $name): void {
 set_include_path($argv[1]);
 require dirname(__DIR__, 2) . '/deploy.php';
 $mode = $argv[2] ?? 'graph';
+set('release_name', '42');
+if ($mode === 'deploy:recover-published') {
+    runTask('deploy:remember-current');
+    if (getenv('PROBE_PUBLISHED')) { runTask('deploy:mark-published'); }
+    if (getenv('PROBE_LOCK_ACQUIRED')) { runTask('deploy:mark-locked'); }
+}
 $failed = false;
 if ($mode !== 'graph') {
     try {

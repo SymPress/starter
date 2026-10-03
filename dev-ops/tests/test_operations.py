@@ -2,6 +2,7 @@ import importlib.util
 import io
 import json
 from pathlib import Path
+import subprocess
 import tarfile
 import tempfile
 import unittest
@@ -13,6 +14,38 @@ spec.loader.exec_module(ops)
 
 
 class OperationsTest(unittest.TestCase):
+    @unittest.skipUnless((Path(__file__).parents[2] / 'vendor/autoload.php').exists(),
+                         'Native Monolog formatting requires Composer dependencies.')
+    def test_native_monolog_structured_locations_are_distinct_and_messages_do_not_change_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            log = root / 'app.log'
+            state = root / 'state.json'
+            log.touch()
+            settings = {'health_url': 'https://target.test/health', 'log_file': str(log),
+                        'state_file': str(state), 'alert_recipient': 'ops@example.invalid'}
+            class Response(io.BytesIO):
+                status = 200
+            code = 'require $argv[1]; $formatter = new Monolog\\Formatter\\LineFormatter();' \
+                + '$record = new Monolog\\LogRecord(new DateTimeImmutable(), "production", Monolog\\Level::Error, $argv[4],' \
+                + '["exception" => ["file" => "/srv/releases/old.1/".$argv[3], "line" => 42, "message" => "private-secret"]]);' \
+                + 'file_put_contents($argv[2], $formatter->format($record), FILE_APPEND);'
+            with patch.object(ops, 'open_health', side_effect=lambda *a, **kw: Response(b'{"status":"ok"}')):
+                self.assertEqual(ops.monitor(settings), 0)
+                for filename, message, expected in [('Plugin.php', 'private-first', 1),
+                        ('Other.php', 'private-second', 1), ('Plugin.php', 'uncaught private-secret', 0)]:
+                    result = subprocess.run(['php', '-r', code,
+                        str(Path(__file__).parents[2] / 'vendor/autoload.php'), str(log), filename, message],
+                        text=True, capture_output=True, timeout=10)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    with patch.object(ops.subprocess, 'run') as send:
+                        send.return_value.returncode = 0
+                        self.assertEqual(ops.monitor(settings), expected)
+                persisted = state.read_text()
+                self.assertEqual(len(json.loads(persisted)['log_error_seen']), 2)
+                self.assertNotIn('private-', persisted)
+                self.assertNotIn('Plugin.php', persisted)
+
     def test_monitor_configuration_needs_no_runtime_or_database_access(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'monitor.json'
@@ -84,6 +117,10 @@ class OperationsTest(unittest.TestCase):
                     send.return_value.returncode = 0
                     self.assertEqual(ops.monitor(settings), 1)
                     self.assertNotIn(b'private_secret', send.call_args.kwargs['input'])
+                    with log.open('a') as stream:
+                        stream.write('PHP Fatal password=another_private_secret\n')
+                    self.assertEqual(ops.monitor(settings), 0)
+                    self.assertEqual(send.call_count, 1)
                 self.assertEqual(ops.monitor(settings), 0)
                 log.write_text('Uncaught fresh\n')
                 with patch.object(ops.subprocess, 'run') as send:
@@ -95,12 +132,15 @@ class OperationsTest(unittest.TestCase):
             root = Path(directory)
             log = root / 'app.log'
             state = root / 'state.json'
-            log.write_text('PHP Fatal password=private_secret\n')
+            log.write_text('INFO baseline\n')
             settings = {'health_url': 'https://target.test/health', 'log_file': str(log),
                         'state_file': str(state), 'alert_recipient': 'ops@example.invalid'}
             class Response(io.BytesIO):
                 status = 200
             with patch.object(ops, 'open_health', side_effect=lambda *a, **kw: Response(b'{"status":"ok"}')), patch.object(ops.subprocess, 'run') as send:
+                self.assertEqual(ops.monitor(settings), 0)
+                with log.open('a') as stream:
+                    stream.write('PHP Fatal password=private_secret\n')
                 send.return_value.returncode = 75
                 with self.assertRaisesRegex(RuntimeError, 'Alert delivery failed'):
                     ops.monitor(settings)
@@ -167,6 +207,38 @@ class OperationsTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'alert_recipient'):
                 ops.monitor({'health_url':'https://target.test/health'})
             send.assert_not_called()
+
+    def test_repeated_locations_alert_again_after_24_hours_without_retaining_messages(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            log = root / 'app.log'
+            state = root / 'state.json'
+            log.write_text('PHP Fatal historic-secret in /srv/releases/old.1/plugin.php:12\n')
+            settings = {'health_url': 'https://target.test/health', 'log_file': str(log),
+                        'state_file': str(state), 'alert_recipient': 'ops@example.invalid'}
+            class Response(io.BytesIO):
+                status = 200
+            with patch.object(ops, 'open_health', side_effect=lambda *a, **kw: Response(b'{"status":"ok"}')), \
+                    patch.object(ops.subprocess, 'run') as send, patch.object(ops.time, 'time') as clock:
+                send.return_value.returncode = 0
+                clock.return_value = 1700000000
+                self.assertEqual(ops.monitor(settings), 0)
+                send.assert_not_called()
+                for seconds, release, expected in [(10, 'old.1', 1), (80000, 'new.2', 0), (86411, 'new.2', 1)]:
+                    clock.return_value = 1700000000 + seconds
+                    with log.open('a') as stream:
+                        stream.write(f'PHP Fatal changing-private-secret in /srv/releases/{release}/plugin.php:12\n')
+                    self.assertEqual(ops.monitor(settings), expected)
+                self.assertEqual(send.call_count, 2)
+                with log.open('a') as stream:
+                    stream.write('production.CRITICAL: private-message in /srv/releases/new.2/plugin.php:12\n')
+                    stream.write('PHP Fatal another-secret in /srv/releases/new.2/other.php:42\n')
+                self.assertEqual(ops.monitor(settings), 1)
+                self.assertEqual(send.call_count, 3)
+                persisted = state.read_text()
+                self.assertNotIn('secret', persisted)
+                self.assertNotIn('plugin.php', persisted)
+                self.assertTrue(all(len(key) == 64 for key in json.loads(persisted)['log_error_seen']))
 
 
 if __name__ == '__main__':

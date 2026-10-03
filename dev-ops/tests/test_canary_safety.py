@@ -1,6 +1,7 @@
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -145,14 +146,20 @@ class CanarySafetyTest(unittest.TestCase):
         )
         return result, calls.read_text().splitlines() if calls.exists() else []
 
-    def test_nested_setup_stops_after_a_failed_dependency_update(self):
-        result, calls = self.nested_workflow_command(
-            "setup_command",
-            failure="composer update --with-all-dependencies --no-interaction --no-scripts --no-plugins",
-        )
-        self.assertEqual(result.returncode, 17, result.stderr)
-        self.assertFalse(any(call.startswith("composer install") for call in calls))
-        self.assertFalse(any(call.startswith("composer runtime:setup") for call in calls))
+    def test_nested_setup_keeps_updates_in_the_authenticated_fetch_phase(self):
+        result, calls = self.nested_workflow_command('setup_command')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertFalse(any(call.startswith('composer update') for call in calls))
+        expression = self.workflow_command('composer_update')
+        self.assertIn("github.event_name == 'schedule'", expression)
+        self.assertIn('inputs.update_dependencies', expression)
+
+    def test_shared_workflow_starts_ddev_before_fetch_and_setup(self):
+        workflow = (ROOT / '.github/workflows/ddev-smoke.yml').read_text()
+        self.assertNotIn('ddev_start_command:', workflow)
+        result, calls = self.nested_workflow_command('setup_command')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn('start', calls)
 
     def test_nested_setup_rejects_invalid_mode_before_installation(self):
         result, calls = self.nested_workflow_command(
@@ -197,6 +204,24 @@ class CanarySafetyTest(unittest.TestCase):
         self.assertIn('canary_mode="$(bash .github/scripts/canary-mode.sh)"', text)
         self.assertIn("update_dependencies:", text)
         self.assertIn("default: false", text)
+
+    @unittest.skipUnless(shutil.which('node'), 'Workflow expression evaluation requires Node.')
+    def test_update_checkout_freezes_source_while_push_and_pr_keep_their_own_commit(self):
+        expression = self.workflow_command('checkout_ref')
+        self.assertTrue(expression.startswith('${{ ') and expression.endswith(' }}'))
+        fixtures = [
+            {'event': 'push', 'update': True, 'expected': ''},
+            {'event': 'pull_request', 'update': True, 'expected': ''},
+            {'event': 'schedule', 'update': False, 'expected': 'v1.1.2'},
+            {'event': 'workflow_dispatch', 'update': False, 'expected': ''},
+            {'event': 'workflow_dispatch', 'update': True, 'expected': 'v1.1.2'},
+        ]
+        code = 'const choose = new Function("github", "inputs", "return " + process.argv[1]);' \
+            + 'console.log(JSON.stringify(JSON.parse(process.argv[2]).map(f => choose({event_name:f.event}, {update_dependencies:f.update}))));'
+        result = subprocess.run(['node', '-e', code, expression[4:-3], json.dumps(fixtures)],
+                                text=True, capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout), [fixture['expected'] for fixture in fixtures])
 
 
 if __name__ == "__main__":
