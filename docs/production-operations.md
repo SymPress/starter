@@ -200,6 +200,18 @@ validated production dependencies.
 Enable only after testing with the final package set and budget memory from actual
 measurements. The kernel cache stays release-specific to avoid stale containers.
 
+The supported WordPress profile explicitly sets `opcache.jit=disable` and
+`opcache.jit_buffer_size=0` while retaining ordinary OPcache. In the native review
+fixture, PHP 8.5.9 with OPcache enabled, JIT `1235` and a 256 MiB JIT buffer exited
+with SIGSEGV (11); the same pinned WordPress/guard fixture passed with JIT disabled.
+This is evidence for that tested combination, not a finding that every PHP 8.5
+release or application fails with JIT. The PHP default `disable` prevents enabling
+JIT at request time; a zero buffer also reserves no JIT memory. Install this file
+after inherited PHP fragments and check the effective FPM settings. The native
+profile test verifies that a previously enabling fragment is overridden, OPcache
+still works, and a request cannot enable JIT. See the
+[PHP configuration reference](https://www.php.net/manual/en/opcache.configuration.php#ini.opcache.jit).
+
 The optional `sympress/framework-bundle` supplies a WordPress object-cache adapter.
 The pilot default is Redis with that adapter from `^1.0.3`, exactly one drop-in
 owner and an independent site/environment secret. Keep the generic template
