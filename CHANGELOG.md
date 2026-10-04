@@ -4,6 +4,11 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.1.3 — 2026-10-04
+
+- Explicitly disable JIT while retaining OPcache in the supported WordPress production profile, with a real FPM regression for inherited configuration and request-time activation.
+- Advance the fixed source baseline for update canaries to `v1.1.3`; Composer dependencies remain unchanged.
+
 ## 1.1.1 — 2026-10-03
 
 - Preserve the browser's default payment permission so production headers do not disable checkout integrations using Payment Request.
