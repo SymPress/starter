@@ -4,6 +4,11 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.1.4 — 2026-10-05
+
+- Require and lock Runtime 1.2.3 and Kernel 1.1.5, keeping outbound HTTP blocking opt-in and mutable cache metadata fresh without reader invalidation.
+- Advance the fixed update-canary source baseline to `v1.1.4`.
+
 ## 1.1.3 — 2026-10-04
 
 - Explicitly disable JIT while retaining OPcache in the supported WordPress production profile, with a real FPM regression for inherited configuration and request-time activation.
