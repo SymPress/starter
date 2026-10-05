@@ -11,6 +11,15 @@ NATIVE_DEPLOYER = Path(os.environ.get('SYMPRESS_DEPLOYER_PROBE',
 
 
 class DeployTest(unittest.TestCase):
+    def test_cache_is_not_group_writable_and_php_doctor_runs_as_actual_php_user(self):
+        recipe = json.loads(self.probe().stdout)
+        self.assertNotIn('var/cache', recipe['writable_dirs'])
+        self.assertFalse(recipe['forward_agent'])
+        result = self.probe('deploy:permissions')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('sudo -n -u {{php_user}} {{bin/php}} {{release_path}}/vendor/bin/runtime doctor',
+                      json.loads(result.stdout)['commands'][-1])
+
     @unittest.skipUnless(NATIVE_DEPLOYER.is_file() and shutil.which('php-fpm8.5') and shutil.which('cgi-fcgi'),
                          'Native recovery fixture requires installed Deployer 8 and PHP-FPM 8.5.')
     def test_native_workers_restore_published_release_and_unlock_after_refresh_failures(self):
@@ -140,7 +149,7 @@ class DeployTest(unittest.TestCase):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_bytes(Path(upload['source']).read_bytes())
                 self.assertNotIn(current, destination.parents)
-            self.assertEqual(len(recipe['uploads']), 2)
+            self.assertEqual(len(recipe['uploads']), 3)
             self.assertFalse((retained / 'dev-ops').exists())
             self.assertEqual(current.resolve(), retained)
             self.assertIn('0750', recipe['commands'][0])

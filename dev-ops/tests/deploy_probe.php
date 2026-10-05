@@ -16,6 +16,7 @@ function host(string $stage): object {
     return new class {
         public function __call(string $method, array $arguments): self {
             if ($method === 'set') { set($arguments[0], $arguments[1]); }
+            if ($method === 'setForwardAgent') { set('forward_agent', $arguments[0]); }
             return $this;
         }
     };
@@ -73,5 +74,6 @@ if ($mode !== 'graph') {
 echo json_encode(['deploy' => $tasks['deploy'], 'hooks' => $hooks,
     'refresh' => $tasks['deploy:refresh'], 'commands' => $commands, 'uploads' => $uploads,
     'tools' => get('sympress_tools_path'), 'log_group' => get('log_group'),
-    'service' => get('php_fpm_service')], JSON_THROW_ON_ERROR);
+    'service' => get('php_fpm_service'), 'forward_agent' => get('forward_agent'),
+    'writable_dirs' => get('writable_dirs')], JSON_THROW_ON_ERROR);
 exit($failed ? 17 : 0);

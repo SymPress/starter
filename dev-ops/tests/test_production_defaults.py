@@ -85,7 +85,7 @@ require $argv[1];
             fixture.chmod(0o755)
             public = fixture / 'current/public'
             public.mkdir(parents=True)
-            (public / 'index.php').write_text('<?php echo "private-header-fixture";')
+            (public / 'index.php').write_text('<?php echo "private-header-fixture\\n"; echo json_encode(["query" => $_GET, "uri" => $_SERVER["REQUEST_URI"]]);')
             certificate = fixture / 'certificate.pem'
             key = fixture / 'key.pem'
             subprocess.run([OPENSSL, 'req', '-x509', '-newkey', 'rsa:2048', '-nodes',
@@ -150,7 +150,7 @@ require $argv[1];
                         with urllib.request.urlopen(f'https://127.0.0.1:{port}/index.php?fixture=1',
                                                     context=context, timeout=1) as response:
                             self.assertEqual(response.status, 200)
-                            self.assertEqual(response.read(), b'private-header-fixture')
+                            self.assertTrue(response.read().startswith(b'private-header-fixture\n'))
                             for name in ('X-Content-Type-Options', 'X-Frame-Options',
                                          'Content-Security-Policy', 'Referrer-Policy',
                                          'Content-Security-Policy-Report-Only',
@@ -168,8 +168,23 @@ require $argv[1];
                         if nginx.poll() is not None or time.monotonic() >= deadline:
                             raise
                         time.sleep(0.02)
+                with urllib.request.urlopen(f'https://127.0.0.1:{port}/index.php?utm_source=first&gclid=123', context=context) as first:
+                    canonical = first.read()
+                    data = json.loads(canonical.split(b'\n', 1)[1])
+                    self.assertEqual(data['query'], [])
+                    self.assertEqual(data['uri'], '/index.php')
+                    self.assertEqual(first.headers['X-Nginx-Cache'], 'MISS')
+                with urllib.request.urlopen(f'https://127.0.0.1:{port}/index.php?utm_source=second', context=context) as second:
+                    self.assertEqual(second.headers['X-Nginx-Cache'], 'HIT')
+                    self.assertEqual(second.read(), canonical)
+                with urllib.request.urlopen(f'https://127.0.0.1:{port}/index.php?utm_source=mixed&s=search', context=context) as mixed:
+                    self.assertEqual(mixed.headers['X-Nginx-Cache'], 'BYPASS')
+                    data = json.loads(mixed.read().split(b'\n', 1)[1])
+                    self.assertEqual(data['query'], {'utm_source': 'mixed', 's': 'search'})
+                    self.assertEqual(data['uri'], '/index.php?utm_source=mixed&s=search')
             finally:
                 self.stop_process(nginx)
+                shutil.rmtree(fixture / 'cache', ignore_errors=True)
 
     @staticmethod
     def stop_process(process):
