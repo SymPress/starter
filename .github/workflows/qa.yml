@@ -44,6 +44,9 @@ jobs:
         run: |
           set -euo pipefail
           sudo apt-get update
+          sudo apt-get install --no-install-recommends -y software-properties-common
+          sudo add-apt-repository --yes ppa:ondrej/php
+          sudo apt-get update
           sudo apt-get install --no-install-recommends -y php8.5-fpm libfcgi-bin nginx
           composer install --no-plugins --no-scripts --prefer-dist --no-interaction --no-progress
           composer install --working-dir=deployment --no-plugins --no-scripts --prefer-dist --no-interaction --no-progress
