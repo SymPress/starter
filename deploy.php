@@ -10,7 +10,8 @@ set('application', 'sympress');
 set('keep_releases', 5);
 set('shared_files', []);
 set('shared_dirs', ['public/wp-content/uploads', 'var/log']);
-set('writable_dirs', ['public/wp-content/uploads', 'var/log', 'var/cache']);
+// var/cache stays release-private: Runtime's doctor rejects group-writable kernel caches.
+set('writable_dirs', ['public/wp-content/uploads', 'var/log']);
 set('writable_mode', 'chmod');
 set('writable_chmod_mode', '0770');
 set('allow_anonymous_stats', false);
@@ -51,8 +52,35 @@ if (!preg_match('~^/[A-Za-z0-9/_-]+$~D', $path)) {
 }
 
 foreach (['production', 'staging'] as $stage) {
-    host($stage)->setHostname($hostname)->setRemoteUser($user)->setPort((int) $port)
+    // Build output runs remotely during deploy; it must not reach the runner's SSH agent.
+    host($stage)->setHostname($hostname)->setRemoteUser($user)->setPort((int) $port)->setForwardAgent(false)
         ->set('deploy_path', $path)->set('stage', $stage);
+}
+
+/**
+ * Runtime checks another identity's access through POSIX modes only; when those allow it,
+ * ACLs leave the result "unknown" (exit 2). Accept exactly that, nothing else.
+ */
+function assertPhpUserDoctor(string $output): void
+{
+    try {
+        $report = json_decode($output, true, 16, JSON_THROW_ON_ERROR);
+    } catch (\JsonException) {
+        throw new \RuntimeException('Runtime doctor for the PHP-FPM identity returned no readable report.');
+    }
+    $checks = is_array($report) && is_array($report['checks'] ?? null) ? $report['checks'] : [];
+    if ($checks === []) {
+        throw new \RuntimeException('Runtime doctor for the PHP-FPM identity returned no checks.');
+    }
+    foreach ($checks as $check) {
+        $id = is_array($check) && is_string($check['id'] ?? null) ? $check['id'] : '';
+        $status = is_array($check) ? ($check['status'] ?? null) : null;
+        // Same verdict as doctor's own exit code, minus the ACL-only readability unknowns.
+        $tolerated = $status === 'unknown' && preg_match('/^production\.readable\.\d+$/D', $id) === 1;
+        if (!is_string($status) || $status === 'fail' || ($status === 'unknown' && !$tolerated)) {
+            throw new \RuntimeException('Runtime doctor for the PHP-FPM identity reported ' . (is_string($status) ? $status : 'invalid') . ' for ' . ($id !== '' ? $id : 'a check') . '.');
+        }
+    }
 }
 
 task('deploy:fpm-check', static function (): void {
@@ -190,7 +218,9 @@ task('deploy:permissions', static function (): void {
         run('find ' . $shared . ' -type f -exec chmod 0660 {} +');
     }
     // Release-specific warmed kernel cache is read-only to FPM under build-ID policy.
-    run('cd {{release_path}} && {{bin/php}} vendor/bin/runtime doctor --production --database-health --php-user={{php_user}} --no-interaction');
+    // Exit 1 (fail) aborts here; exit 2 (unknown) is evaluated check by check below.
+    assertPhpUserDoctor(run('cd {{release_path}} && ({{bin/php}} vendor/bin/runtime doctor --production --database-health '
+        . '--php-user={{php_user}} --json --no-interaction || test $? -eq 2)'));
 });
 
 task('deploy:health', static function (): void {
