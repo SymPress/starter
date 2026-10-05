@@ -16,6 +16,7 @@ function host(string $stage): object {
     return new class {
         public function __call(string $method, array $arguments): self {
             if ($method === 'set') { set($arguments[0], $arguments[1]); }
+            if ($method === 'setForwardAgent') { set('forward_agent', $arguments[0]); }
             return $this;
         }
     };
@@ -30,6 +31,9 @@ function run(string $command): string {
     }
     if (getenv('PROBE_FAIL_RESET') && str_contains($command, 'cgi-fcgi')) {
         throw new \RuntimeException('Simulated reset failure.');
+    }
+    if (str_contains($command, 'runtime doctor') && getenv('PROBE_DOCTOR_JSON') !== false) {
+        return getenv('PROBE_DOCTOR_JSON');
     }
     return str_contains($command, 'readlink') ? (getenv('PROBE_PREVIOUS_RELEASE') ?: '') : '';
 }
@@ -73,5 +77,6 @@ if ($mode !== 'graph') {
 echo json_encode(['deploy' => $tasks['deploy'], 'hooks' => $hooks,
     'refresh' => $tasks['deploy:refresh'], 'commands' => $commands, 'uploads' => $uploads,
     'tools' => get('sympress_tools_path'), 'log_group' => get('log_group'),
-    'service' => get('php_fpm_service')], JSON_THROW_ON_ERROR);
+    'service' => get('php_fpm_service'), 'writable_dirs' => get('writable_dirs'),
+    'forward_agent' => get('forward_agent')], JSON_THROW_ON_ERROR);
 exit($failed ? 17 : 0);

@@ -158,7 +158,7 @@ class DeployTest(unittest.TestCase):
         self.assertTrue(all('grep -Fxq {{log_group}}' in command for command in recipe['commands'][2:4]))
 
     def test_monitor_gets_only_traversal_permissions_on_log_ancestors(self):
-        result = self.probe('deploy:permissions')
+        result = self.probe('deploy:permissions', PROBE_DOCTOR_JSON=self.doctor_report(('production.readable.0', 'unknown')))
         self.assertEqual(result.returncode, 0, result.stderr)
         commands = json.loads(result.stdout)['commands']
         self.assertEqual(commands[:3], [
@@ -166,6 +166,40 @@ class DeployTest(unittest.TestCase):
             'setfacl -m g:{{log_group}}:--x {{deploy_path}}/shared',
             'setfacl -m g:{{log_group}}:--x {{deploy_path}}/shared/var'])
         self.assertFalse(any('setfacl' in command and '.env' in command for command in commands))
+
+    @staticmethod
+    def doctor_report(*checks):
+        return json.dumps({'environment': 'production', 'exit': 2, 'checks': [
+            {'id': 'kernel.cache', 'status': 'pass', 'detail': ''},
+            {'id': 'production.wordpress-hardening-activation', 'status': 'unverified', 'detail': ''},
+            *({'id': check_id, 'status': status, 'detail': ''} for check_id, status in checks)]})
+
+    def test_kernel_cache_is_not_made_group_writable(self):
+        result = self.probe()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn('var/cache', json.loads(result.stdout)['writable_dirs'])
+
+    def test_ssh_agent_is_not_forwarded_to_deploy_hosts(self):
+        result = self.probe()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIs(json.loads(result.stdout)['forward_agent'], False)
+
+    def test_php_user_doctor_tolerates_only_acl_readability_unknowns(self):
+        accepted = self.probe('deploy:permissions', PROBE_DOCTOR_JSON=self.doctor_report(
+            ('production.readable.0', 'unknown'), ('production.readable.1', 'unknown')))
+        self.assertEqual(accepted.returncode, 0, accepted.stderr)
+        command = json.loads(accepted.stdout)['commands'][-1]
+        self.assertIn('--php-user={{php_user}} --json', command)
+        self.assertIn('|| test $? -eq 2', command)
+        for check_id, status in (('kernel.cache', 'unknown'), ('production.readable.0', 'fail'),
+                                 ('production.app-secret', 'fail')):
+            with self.subTest(check=check_id, status=status):
+                rejected = self.probe('deploy:permissions', PROBE_DOCTOR_JSON=self.doctor_report((check_id, status)))
+                self.assertEqual(rejected.returncode, 17)
+                self.assertIn(check_id, rejected.stderr)
+        for report in ('', 'not json', json.dumps({'checks': []})):
+            with self.subTest(report=report):
+                self.assertEqual(self.probe('deploy:permissions', PROBE_DOCTOR_JSON=report).returncode, 17)
 
     def test_invalid_log_group_fails_before_remote_commands(self):
         result = self.probe('deploy:fpm-check', SYMPRESS_LOG_GROUP='logs;touch injected')
