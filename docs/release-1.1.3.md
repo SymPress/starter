@@ -12,6 +12,10 @@ including after an attempted request-time activation. Existing deployments recei
 the defaults when their adapted production PHP profile is installed and FPM is
 reloaded. Composer dependencies remain unchanged; no private integration is added.
 
+The hosted operations job installs PHP 8.5/FPM, FastCGI, nginx and the locked public
+fixture dependencies without running Composer plugins or scripts. Native operation
+checks must execute without skips; their assertions remain unchanged.
+
 Scheduled and explicit manual update canaries use the fixed source tag `v1.1.3`.
 The first executions of that baseline must be recorded after publication; earlier
 `v1.1.2` results do not certify the new source.

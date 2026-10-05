@@ -33,5 +33,26 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+      - name: Set up native PHP test environment
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
+        with:
+          php-version: '8.5'
+          extensions: curl, dom, mbstring, opcache, xml, zip
+          tools: composer:2.10.3
+          coverage: none
+      - name: Install native operation fixtures
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y php8.5-fpm libfcgi-bin nginx
+          composer install --no-plugins --no-scripts --prefer-dist --no-interaction --no-progress
+          composer install --working-dir=deployment --no-plugins --no-scripts --prefer-dist --no-interaction --no-progress
       - name: Verify backup, restore and monitoring controls
-        run: python3 -m unittest discover -s dev-ops/tests -v
+        run: |
+          python3 - <<'PY'
+          import unittest
+          result = unittest.TextTestRunner(verbosity=2).run(unittest.defaultTestLoader.discover('dev-ops/tests'))
+          if result.skipped:
+              raise SystemExit('Native operation fixtures must run without skipped tests.')
+          raise SystemExit(0 if result.wasSuccessful() else 1)
+          PY
