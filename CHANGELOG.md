@@ -4,13 +4,20 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
-## 1.1.5 — 2026-10-05
+## 1.1.6 — 2026-10-06
 
-- Seal kernel caches outside Deployer's group-writable directory list and run the production permissions check as the actual PHP identity through narrowly scoped sudo.
-- Disable SSH-agent forwarding and validate production WordPress policy through FPM before promotion, alongside the existing database and post-promotion health checks.
-- Exercise two complete deployments on a disposable SSH/MariaDB/FPM host in CI, including rejection of a group-writable cache.
-- Strip tracking-only query strings before PHP while retaining semantic and mixed query strings; cover cold and warm FastCGI responses.
-- Require Runtime 1.2.4 and Monolog 1.1.4 and advance the fixed update-canary source baseline to `v1.1.5`. Security remains private and is not installed or loaded.
+- Require and lock Runtime 1.2.4 and Monolog Bundle 1.1.4.
+- Exercise two complete deployments on an isolated SSH/MariaDB/FPM host in CI.
+- Strip tracking-only queries from PHP request parameters and the nginx cache key while keeping semantic queries uncached.
+- Advance the fixed update-canary source baseline to `v1.1.6`; preserve the production-doctor and private FPM checks from 1.1.5.
+
+## 1.1.5 — 2026-10-06
+
+- Keep the release-local kernel cache out of group-writable directories.
+- Evaluate the PHP-user production doctor report and accept only cross-identity readability unknowns; reject failed and malformed checks.
+- Disable SSH agent forwarding to deployment hosts.
+- Check prepublication WordPress hardening and database access through the private FPM socket, where the web policy applies.
+- Advance the fixed update-canary source baseline to `v1.1.5`; locked dependencies remain unchanged.
 
 ## 1.1.4 — 2026-10-05
 

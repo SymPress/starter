@@ -11,15 +11,6 @@ NATIVE_DEPLOYER = Path(os.environ.get('SYMPRESS_DEPLOYER_PROBE',
 
 
 class DeployTest(unittest.TestCase):
-    def test_cache_is_not_group_writable_and_php_doctor_runs_as_actual_php_user(self):
-        recipe = json.loads(self.probe().stdout)
-        self.assertNotIn('var/cache', recipe['writable_dirs'])
-        self.assertFalse(recipe['forward_agent'])
-        result = self.probe('deploy:permissions')
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn('sudo -n -u {{php_user}} {{bin/php}} {{release_path}}/vendor/bin/runtime doctor',
-                      json.loads(result.stdout)['commands'][-1])
-
     @unittest.skipUnless(NATIVE_DEPLOYER.is_file() and shutil.which('php-fpm8.5') and shutil.which('cgi-fcgi'),
                          'Native recovery fixture requires installed Deployer 8 and PHP-FPM 8.5.')
     def test_native_workers_restore_published_release_and_unlock_after_refresh_failures(self):
@@ -117,6 +108,16 @@ class DeployTest(unittest.TestCase):
         self.assertIn('SCRIPT_FILENAME={{sympress_tools_path}}/opcache-reset.php', command)
         self.assertIn('set -o pipefail', command)
 
+    def test_prepublication_policy_runs_in_fpm_instead_of_wp_cli(self):
+        result = self.probe('deploy:health')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        commands = json.loads(result.stdout)['commands']
+        self.assertIn('wp-cli.phar core is-installed', commands[0])
+        self.assertIn('SCRIPT_FILENAME={{sympress_tools_path}}/verify-runtime.php', commands[1])
+        self.assertIn('SYMPRESS_RELEASE_PATH={{release_path}}', commands[1])
+        self.assertIn('cgi-fcgi -bind -connect {{php_fpm_socket}}', commands[1])
+        self.assertFalse(any('DISALLOW_FILE_EDIT' in command for command in commands))
+
     def test_published_health_runs_from_current_after_switch_and_rollback(self):
         result = self.probe('deploy:published-health')
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -167,7 +168,7 @@ class DeployTest(unittest.TestCase):
         self.assertTrue(all('grep -Fxq {{log_group}}' in command for command in recipe['commands'][2:4]))
 
     def test_monitor_gets_only_traversal_permissions_on_log_ancestors(self):
-        result = self.probe('deploy:permissions')
+        result = self.probe('deploy:permissions', PROBE_DOCTOR_JSON=self.doctor_report(('production.readable.0', 'unknown')))
         self.assertEqual(result.returncode, 0, result.stderr)
         commands = json.loads(result.stdout)['commands']
         self.assertEqual(commands[:3], [
@@ -175,6 +176,43 @@ class DeployTest(unittest.TestCase):
             'setfacl -m g:{{log_group}}:--x {{deploy_path}}/shared',
             'setfacl -m g:{{log_group}}:--x {{deploy_path}}/shared/var'])
         self.assertFalse(any('setfacl' in command and '.env' in command for command in commands))
+
+    @staticmethod
+    def doctor_report(*checks):
+        return json.dumps({'environment': 'production', 'exit': 2, 'checks': [
+            {'id': 'kernel.cache', 'status': 'pass', 'detail': ''},
+            {'id': 'production.wordpress-hardening-activation', 'status': 'unverified', 'detail': ''},
+            *({'id': check_id, 'status': status, 'detail': ''} for check_id, status in checks)]})
+
+    def test_kernel_cache_is_not_made_group_writable(self):
+        result = self.probe()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn('var/cache', json.loads(result.stdout)['writable_dirs'])
+
+    def test_ssh_agent_is_not_forwarded_to_deploy_hosts(self):
+        result = self.probe()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIs(json.loads(result.stdout)['forward_agent'], False)
+
+    def test_php_user_doctor_tolerates_only_acl_readability_unknowns(self):
+        accepted = self.probe('deploy:permissions', PROBE_DOCTOR_JSON=self.doctor_report(
+            ('production.readable.0', 'unknown'), ('production.readable.1', 'unknown')))
+        self.assertEqual(accepted.returncode, 0, accepted.stderr)
+        command = json.loads(accepted.stdout)['commands'][-1]
+        self.assertIn('--php-user={{php_user}} --json', command)
+        self.assertIn('|| test $? -eq 2', command)
+        for check_id, status in (('kernel.cache', 'unknown'), ('production.readable.0', 'fail'),
+                                 ('production.app-secret', 'fail')):
+            with self.subTest(check=check_id, status=status):
+                rejected = self.probe('deploy:permissions', PROBE_DOCTOR_JSON=self.doctor_report((check_id, status)))
+                self.assertEqual(rejected.returncode, 17)
+                self.assertIn(check_id, rejected.stderr)
+        for report in ('', 'not json', json.dumps({'checks': []}),
+                       json.dumps({'checks': {'first': {'id': 'kernel.cache', 'status': 'pass'}}}),
+                       self.doctor_report(('kernel.cache', 'invalid-status')),
+                       self.doctor_report(('', 'pass'))):
+            with self.subTest(report=report):
+                self.assertEqual(self.probe('deploy:permissions', PROBE_DOCTOR_JSON=report).returncode, 17)
 
     def test_invalid_log_group_fails_before_remote_commands(self):
         result = self.probe('deploy:fpm-check', SYMPRESS_LOG_GROUP='logs;touch injected')

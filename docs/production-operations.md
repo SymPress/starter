@@ -27,15 +27,6 @@ Set `SYMPRESS_FPM_SERVICE` to the remote systemd service (default `php8.5-fpm`).
 The deploy identity needs a narrow passwordless sudo rule for
 `/usr/bin/systemctl reload php8.5-fpm` using the selected service. The recipe
 checks the active service and sudo permission before deploy or rollback.
-The permission check also runs as the actual PHP user. Grant only that command:
-
-```sudoers
-deploy ALL=(www-data) NOPASSWD: /usr/bin/php /srv/sympress/releases/*/vendor/bin/runtime doctor --production --database-health --php-user=www-data --no-interaction
-```
-
-Adjust the identity, PHP binary and absolute deployment path to the host. SSH agent
-forwarding is disabled. Kernel caches are excluded from `writable_dirs`; their
-release-local directories are sealed at 0750, never 0770.
 Install `acl` for `setfacl`, and `libfcgi-bin` for `/usr/bin/cgi-fcgi`; give the deploy identity access to the
 private pool socket. `SYMPRESS_FPM_SOCKET` defaults to `/run/php/php8.5-fpm.sock`.
 Supply independently verified `SSH_KNOWN_HOSTS`; dependency install credentials
@@ -115,12 +106,10 @@ The deploy identity owns release files. The permission step assigns the selected
 PHP group, makes directories 0750 and code/config 0640 (executables 0750), makes
 shared uploads/logs 2770/0660, then runs doctor for the selected PHP identity.
 PHP-FPM receives read/execute access to
-code/config and write access to shared uploads/logs. Runtime 1.2.4 accepts readable,
-sealed immutable caches owned by the release owner for diagnosis, while cache
-maintenance retains its ownership checks. Doctor runs with `sudo -n -u www-data`
-after permission provisioning. The private `verify-runtime.php` helper checks the
-candidate's web defaults in FPM before promotion; WP-CLI intentionally has different
-file-modification semantics. Never make the project root the HTTP docroot.
+code/config and write access only to uploads/logs/runtime cache as required. Warm
+and seal release-specific compiled kernel caches where supported; use Runtime's
+`--php-user=www-data --webroot=.../public` doctor to verify that identity after
+permission provisioning. Never make the project root the HTTP docroot.
 
 ```sh
 ./deployment/vendor/bin/dep -f deploy.php deploy production -v

@@ -1,11 +1,22 @@
 # Starter 1.1.5
 
-Deploys keep `var/cache` outside the group-writable directory list and validate its sealed 0750 permissions as the actual PHP user. The deploy user needs the narrow sudo rule documented in `production-operations.md`; SSH-agent forwarding is disabled.
+The deployment recipe keeps `var/cache` out of group-writable directories and
+seals the release-local cache with mode 0750. Runtime 1.2.3 can check it before
+publication.
 
-The recipe now verifies production WordPress policy through FPM before switching the release. Database checks and post-switch build-ID health checks remain mandatory. CI deploys the real recipe twice to a disposable SSH/MariaDB/FPM host and confirms that a 0770 cache still fails.
+The PHP-user doctor report accepts only `production.readable.<number>` unknowns,
+which represent ACL readability that the deploy identity cannot verify. Failed
+checks, other unknowns, malformed checks and empty reports stop deployment.
+SSH agent forwarding to production and staging hosts is disabled.
 
-Tracking-only query strings are removed before PHP and share the canonical page cache. Semantic or mixed query strings retain their original bypass behavior. Reload nginx after adopting the configuration change.
+Before publication, WordPress hardening and database access are checked through
+the private FPM socket. WP-CLI intentionally uses a different file-editing policy;
+the recipe no longer dereferences its undefined `DISALLOW_FILE_EDIT` constant.
 
-The stable lockfile includes Runtime 1.2.4 and Monolog 1.1.4. Update canaries use the fixed `v1.1.5` source baseline. Future scheduled canaries and customer-environment acceptance remain separate evidence.
+Locked dependencies are unchanged. Scheduled dependency-update canaries start
+from `v1.1.5`. Security remains private and is absent from the manifest, lockfile
+and MU-plugin loader.
 
-Security remains private and is not required or loaded. Projects that install it must keep CSP report-only until validating their own enforced policy; `vulnerability:check` is not added as a mandatory gate here.
+This release does not include Runtime's pending OPcache fix, the dependency
+download-cache transfer for private packages, or a complete disposable-host
+deployment CI job. These remain separate follow-ups.

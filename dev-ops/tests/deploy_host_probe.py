@@ -154,7 +154,15 @@ def main():
         report = json.loads(negative.stdout)
         assert any(check['id'] == 'kernel.cache' and check['status'] == 'fail' for check in report['checks'])
         cache.chmod(0o750)
-        print(json.dumps({'deploys': 2, 'doctor_identity': 'www-data', 'cache_mode': '0750', 'ssh_agent_forwarding': False, 'fpm_health': 'ok'}))
+        recipe.write_text(recipe.read_text() + "\ntask('deploy:published-health', static function (): void { throw new \\RuntimeException('Expected health failure after publication.'); });\n")
+        failed = subprocess.run(['sudo', '-E', '-u', 'sympress-probe', 'php', str(source / 'deployment/vendor/bin/dep'),
+                                 '-f', str(recipe), 'deploy', 'production', '-n', '--no-ansi'],
+                                cwd=source, env=environment, text=True, capture_output=True, timeout=240)
+        assert failed.returncode != 0, failed.stdout + failed.stderr
+        assert (deploy_path / 'current').resolve(strict=True) == current, failed.stdout + failed.stderr
+        assert not (deploy_path / '.dep/deploy.lock').exists()
+        print(json.dumps({'deploys': 2, 'failed_health_rollback': 'pass', 'doctor_identity': 'www-data',
+                          'cache_mode': '0750', 'ssh_agent_forwarding': False, 'fpm_health': 'ok'}))
     except Exception:
         candidates = sorted((deploy_path / 'releases').glob('*'))
         if candidates and socket_path.exists():
