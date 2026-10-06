@@ -58,6 +58,26 @@ class DeployTest(unittest.TestCase):
         self.assertTrue(any('systemctl reload' in command for command in commands))
         self.assertEqual(commands[-1], 'unlock')
 
+    @unittest.skipUnless(shutil.which('rsync'), 'Native upload filtering requires rsync.')
+    def test_upload_preserves_package_var_files_and_excludes_only_project_runtime(self):
+        with tempfile.TemporaryDirectory() as directory:
+            payload, destination = Path(directory) / 'payload', Path(directory) / 'destination'
+            for name in ('vendor/autoload.php', 'public/wp/wp-load.php',
+                         'vendor/library/var/reference.php', 'public/wp-content/plugins/plugin/var/code.php',
+                         'var/cache/private.php', '.env', 'vendor/library/.env',
+                         'public/wp-content/uploads/private.jpg'):
+                path = payload / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text('fixture')
+            result = self.probe('deploy:upload', SYMPRESS_RELEASE_DIRECTORY=str(payload))
+            self.assertEqual(result.returncode, 0, result.stderr)
+            options = json.loads(result.stdout)['uploads'][0]['options']['options']
+            subprocess.run(['rsync', '-a', *options, str(payload) + '/', str(destination)], check=True)
+            self.assertTrue((destination / 'vendor/library/var/reference.php').is_file())
+            self.assertTrue((destination / 'public/wp-content/plugins/plugin/var/code.php').is_file())
+            for excluded in ('var', '.env', 'vendor/library/.env', 'public/wp-content/uploads'):
+                self.assertFalse((destination / excluded).exists(), excluded)
+
     def test_release_identity_uses_commit_and_stable_deployment_base(self):
         result = self.probe('deploy:environment', DEPLOY_PATH='/srv/fixture', GITHUB_SHA='a' * 40)
         self.assertEqual(result.returncode, 0, result.stderr)
