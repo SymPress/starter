@@ -29,6 +29,11 @@ The deploy identity needs a narrow passwordless sudo rule for
 checks the active service and sudo permission before deploy or rollback.
 Install `acl` for `setfacl`, and `libfcgi-bin` for `/usr/bin/cgi-fcgi`; give the deploy identity access to the
 private pool socket. `SYMPRESS_FPM_SOCKET` defaults to `/run/php/php8.5-fpm.sock`.
+The nginx template uses the same socket; update its `fastcgi_pass` as well when
+selecting a custom pool. Published build verification uses
+`/?rest_route=/sympress/v1/health` on the canonical HTTPS site, so both plain and
+pretty permalinks work. It requires a direct 200 response with the current build
+ID and continues to reject redirects, TLS errors and stale releases.
 Supply independently verified `SSH_KNOWN_HOSTS`; dependency install credentials
 must be a separate read-only key and must end before any lifecycle/build code.
 

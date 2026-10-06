@@ -11,7 +11,8 @@ $buildId = defined('SYMPRESS_KERNEL_BUILD_ID') ? constant('SYMPRESS_KERNEL_BUILD
 if (!is_string($buildId) || !preg_match('/^[A-Za-z0-9._-]{1,128}$/D', $buildId)) {
     WP_CLI::error('The current release has no valid build ID.');
 }
-$url = home_url('/wp-json/sympress/v1/health');
+// The query route also works before pretty permalinks have been configured.
+$url = add_query_arg('rest_route', '/sympress/v1/health', home_url('/'));
 if (wp_parse_url($url, PHP_URL_SCHEME) !== 'https') {
     WP_CLI::error('Published health verification requires the canonical HTTPS site.');
 }
