@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   deploy:
-    uses: SymPress/workflows/.github/workflows/deploy-deployer.yml@80cbb4a8959a0a225719ab57ba00084cc0ae2bcc
+    uses: SymPress/workflows/.github/workflows/deploy-deployer.yml@2ed4e3bca97fae7cda4d08b176199e2a47a9503e
     with:
       environment: fixture
       working_directory: deployment
