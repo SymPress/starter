@@ -42,8 +42,8 @@ function invoke(string $name): void {
     if ($name === 'deploy:unlock') { $GLOBALS['commands'][] = 'unlock'; return; }
     runTask($name);
 }
-function upload(string $source, string $destination): void {
-    $GLOBALS['uploads'][] = ['source' => $source, 'destination' => $destination];
+function upload(string $source, string $destination, array $options = []): void {
+    $GLOBALS['uploads'][] = ['source' => $source, 'destination' => $destination, 'options' => $options];
 }
 function runTask(string $name): void {
     $action = $GLOBALS['tasks'][$name];

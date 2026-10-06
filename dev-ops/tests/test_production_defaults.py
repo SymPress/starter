@@ -167,6 +167,16 @@ require $argv[1];
                     self.stop_process(fpm)
 
     def assert_php_headers(self, root, fixture, certificate, key, enabled):
+        asset_paths = {
+            '/wp-content/uploads/report-20261006.png': False,
+            '/wp-content/uploads/app.abcdef0123456789.js': False,
+            '/wp-content/themes/fixture/assets/app.abcdef0123456789.js': True,
+            '/wp-content/plugins/fixture/dist/app.abcdef0123456789.js': True,
+        }
+        for path in asset_paths:
+            file = fixture / 'current/public' / path.lstrip('/')
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_text('first')
         output = fixture / 'current/dev-ops/nginx'
         command = ['python3', str(root / 'render-nginx.py'), '--hostname', 'fixture.invalid',
                    '--root', str(fixture), '--output', str(output)]
@@ -235,6 +245,17 @@ require $argv[1];
                     data = json.loads(mixed.read().split(b'\n', 1)[1])
                     self.assertEqual(data['query'], {'utm_source': 'mixed', 's': 'search'})
                     self.assertEqual(data['uri'], '/index.php?utm_source=mixed&s=search')
+                for path, immutable in asset_paths.items():
+                    with urllib.request.urlopen(f'https://127.0.0.1:{port}{path}', context=context) as response:
+                        self.assertEqual(response.read(), b'first')
+                        control = response.headers['Cache-Control']
+                        self.assertEqual('immutable' in control, immutable, path)
+                        self.assertIn('31536000' if immutable else 'max-age=300', control)
+                    if not immutable:
+                        (fixture / 'current/public' / path.lstrip('/')).write_text('updated upload')
+                        with urllib.request.urlopen(f'https://127.0.0.1:{port}{path}', context=context) as response:
+                            self.assertEqual(response.read(), b'updated upload')
+                            self.assertNotIn('immutable', response.headers['Cache-Control'])
             finally:
                 self.stop_process(nginx)
                 shutil.rmtree(fixture / 'cache', ignore_errors=True)

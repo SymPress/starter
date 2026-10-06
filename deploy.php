@@ -174,8 +174,8 @@ task('deploy:upload', static function (): void {
     upload(rtrim($payload, '/') . '/', '{{release_path}}', ['options' => [
         '--exclude=.git', '--exclude=.env*', '--exclude=auth.json', '--exclude=.npmrc',
         '--exclude=node_modules', '--exclude=.npm', '--exclude=.cache',
-        '--exclude=.ddev', '--exclude=.github', '--exclude=operations-state', '--exclude=var',
-        '--exclude=public/wp-content/uploads', '--exclude=deployment/vendor',
+        '--exclude=/.ddev', '--exclude=/.github', '--exclude=/operations-state', '--exclude=/var',
+        '--exclude=/public/wp-content/uploads', '--exclude=/deployment/vendor',
     ]]);
 });
 

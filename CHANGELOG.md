@@ -4,6 +4,13 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.1.8 — 2026-10-06
+
+- Advertise the stable Starter tag to the CLI; older remote catalog defaults do not override an explicitly selected version.
+- Reserve immutable asset headers for fingerprinted theme/plugin build directories, keeping dated and fingerprinted uploads revalidatable.
+- Anchor project runtime exclusions during upload without dropping package-internal `var` directories. Keep nested credential exclusions active.
+- Advance the fixed update-canary source baseline to `v1.1.8`.
+
 ## 1.1.7 — 2026-10-06
 
 - Verify published build IDs through the query REST route for plain and pretty permalinks.
