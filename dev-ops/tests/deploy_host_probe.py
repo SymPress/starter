@@ -113,7 +113,9 @@ def main():
                                 'GIT_CONFIG_COUNT': '1', 'GIT_CONFIG_KEY_0': 'safe.directory', 'GIT_CONFIG_VALUE_0': '*'}
     def user_run(command, cwd=payload):
         return run(['sudo', '-E', '-u', 'sympress-probe', *command], cwd=cwd, env=environment)
-    user_run(['php', 'vendor/bin/runtime', '--skip', 'db-check', '-n'])
+    # A pristine Core has no tables yet. Run its project WP-CLI commands only
+    # after installation; deployment executes the complete Runtime normally.
+    user_run(['php', 'vendor/bin/runtime', '--skip', 'db-check', 'wpcli', '-n'])
     user_run(['php', 'wp-cli.phar', 'core', 'install', '--url=https://fixture.invalid', '--title=Fixture',
               '--admin_user=probe', '--admin_password=' + secrets.token_hex(20), '--admin_email=probe@example.invalid', '--skip-email'])
     recipe = base / 'recipe.php'
