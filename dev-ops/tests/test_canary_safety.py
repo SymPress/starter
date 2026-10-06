@@ -212,9 +212,9 @@ class CanarySafetyTest(unittest.TestCase):
         fixtures = [
             {'event': 'push', 'update': True, 'expected': ''},
             {'event': 'pull_request', 'update': True, 'expected': ''},
-            {'event': 'schedule', 'update': False, 'expected': 'v1.1.7'},
+            {'event': 'schedule', 'update': False, 'expected': 'v1.1.8'},
             {'event': 'workflow_dispatch', 'update': False, 'expected': ''},
-            {'event': 'workflow_dispatch', 'update': True, 'expected': 'v1.1.7'},
+            {'event': 'workflow_dispatch', 'update': True, 'expected': 'v1.1.8'},
         ]
         code = 'const choose = new Function("github", "inputs", "return " + process.argv[1]);' \
             + 'console.log(JSON.stringify(JSON.parse(process.argv[2]).map(f => choose({event_name:f.event}, {update_dependencies:f.update}))));'
