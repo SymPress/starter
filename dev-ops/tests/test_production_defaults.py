@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import pwd
+import re
 import shutil
 import socket
 import ssl
@@ -13,6 +14,7 @@ import unittest
 from unittest.mock import patch
 import importlib.util
 import urllib.request
+import urllib.parse
 
 spec = importlib.util.spec_from_file_location('operations', Path(__file__).parents[1] / 'operations.py')
 ops = importlib.util.module_from_spec(spec)
@@ -23,6 +25,57 @@ OPENSSL = shutil.which('openssl')
 
 
 class ProductionDefaultsTest(unittest.TestCase):
+    @unittest.skipUnless(shutil.which('php'), 'The private WordPress verifier requires PHP.')
+    def test_publication_verifier_uses_query_route_and_rejects_redirects_or_stale_builds(self):
+        helper = Path(__file__).resolve().parents[1] / 'verify-build.php'
+        code = r'''
+define('WP_CLI', true);
+define('SYMPRESS_KERNEL_BUILD_ID', 'release-probe');
+class WP_CLI {
+    public static function error($message) { fwrite(STDERR, $message); exit(17); }
+    public static function success($message) { echo $message; }
+}
+function home_url($path) { return $GLOBALS['argv'][2] . $path; }
+function wp_parse_url($url, $component) { return parse_url($url, $component); }
+function add_query_arg($key, $value, $url) {
+    return $url . (str_contains($url, '?') ? '&' : '?') . http_build_query([$key => $value]);
+}
+function wp_remote_get($url, $options) {
+    echo json_encode(['url' => $url, 'options' => $options]) . "\n";
+    return ['code' => (int) $GLOBALS['argv'][3], 'body' => json_encode([
+        'status' => 'ok', 'build_id' => $GLOBALS['argv'][4]])];
+}
+function is_wp_error($response) { return false; }
+function wp_remote_retrieve_body($response) { return $response['body']; }
+function wp_remote_retrieve_response_code($response) { return $response['code']; }
+require $argv[1];
+'''
+        for home in ('https://fixture.invalid', 'https://fixture.invalid/shop'):
+            for status, build in ((200, 'release-probe'), (301, 'release-probe'),
+                                  (503, 'release-probe'), (200, 'stale')):
+                with self.subTest(home=home, status=status, build=build):
+                    result = subprocess.run(['php', '-r', code, str(helper), home, str(status), build],
+                                            text=True, capture_output=True, timeout=10)
+                    self.assertEqual(result.returncode, 0 if status == 200 and build == 'release-probe' else 17)
+                    captured = json.loads(result.stdout.splitlines()[0])
+                    url = urllib.parse.urlsplit(captured['url'])
+                    self.assertEqual(url.path, urllib.parse.urlsplit(home).path + '/')
+                    self.assertEqual(urllib.parse.parse_qs(url.query), {
+                        'rest_route': ['/sympress/v1/health'], 'sympress_build_probe': ['release-probe']})
+                    self.assertEqual(captured['options']['redirection'], 0)
+                    self.assertTrue(captured['options']['sslverify'])
+
+    def test_nginx_and_recipe_use_the_same_default_fpm_socket(self):
+        root = Path(__file__).resolve().parents[2]
+        recipe = (root / 'deploy.php').read_text()
+        default = re.search(r"set\('php_fpm_socket', getenv\('SYMPRESS_FPM_SOCKET'\) \?: '([^']+)'\)", recipe)
+        self.assertIsNotNone(default)
+        with tempfile.TemporaryDirectory() as directory:
+            subprocess.run(['python3', str(root / 'dev-ops/render-nginx.py'), '--hostname', 'fixture.invalid',
+                            '--root', '/srv/fixture', '--output', directory], check=True, capture_output=True)
+            server = (Path(directory) / 'production-server.conf').read_text()
+            self.assertIn('fastcgi_pass unix:' + default.group(1) + ';', server)
+
     @unittest.skipUnless(shutil.which('php'), 'The private WordPress verifier requires PHP.')
     def test_publication_verifier_bounds_health_body_before_decoding(self):
         helper = Path(__file__).resolve().parents[1] / 'verify-build.php'
@@ -128,7 +181,7 @@ require $argv[1];
         server = server.replace('listen 443 ssl;', f'listen 127.0.0.1:{port} ssl;')
         server = server.replace('/etc/letsencrypt/live/fixture.invalid/fullchain.pem', str(certificate))
         server = server.replace('/etc/letsencrypt/live/fixture.invalid/privkey.pem', str(key))
-        server = server.replace('unix:/run/php-fpm.sock', 'unix:' + str(fixture / 'fpm.sock'))
+        server = server.replace('unix:/run/php/php8.5-fpm.sock', 'unix:' + str(fixture / 'fpm.sock'))
         server = server.replace('/var/log/nginx/', str(fixture) + '/')
         (output / 'production-server.conf').write_text(server)
         cache = (output / 'cache-http.conf').read_text().replace('/var/cache/nginx/wordpress', str(fixture / 'cache'))

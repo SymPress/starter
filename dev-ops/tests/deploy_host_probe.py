@@ -1,8 +1,8 @@
 """Run the complete real recipe on an isolated SSH/MariaDB/FPM host.
 
 Run as root only inside the disposable deploy-host container. Only the systemd
-reload boundary and public HTTPS probe are replaced; PHP-user doctor, upload,
-WordPress, database, cache permissions, symlink and FPM reset run for real.
+reload boundary and public hostname are replaced. The published PHP verifier
+uses real WordPress HTTP over certificate-verified local HTTPS and PHP-FPM.
 """
 import hashlib
 import json
@@ -73,6 +73,12 @@ def main():
                           'Subsystem sftp internal-sftp\n')
     Path('/run/sshd').mkdir(exist_ok=True)
     socket_path = base / 'fpm.sock'
+    https_port = free_port()
+    certificate = base / 'certificate.pem'
+    certificate_key = base / 'certificate.key'
+    run(['openssl', 'req', '-x509', '-newkey', 'rsa:2048', '-nodes',
+         '-keyout', str(certificate_key), '-out', str(certificate), '-days', '1',
+         '-subj', '/CN=127.0.0.1', '-addext', 'subjectAltName=IP:127.0.0.1'])
     fpm_config = base / 'fpm.conf'
     fpm_config.write_text(f'[global]\ndaemonize=no\npid={base}/fpm.pid\nerror_log={base}/fpm.log\n'
                           '[probe]\nuser=www-data\ngroup=www-data\npm=static\npm.max_children=2\n'
@@ -92,6 +98,27 @@ def main():
         run(['rsync', '-a', str(framework / 'src') + '/', str(payload / 'vendor/sympress/framework-bundle/src') + '/'])
     deploy_path = base / 'site'
     (deploy_path / 'shared').mkdir(parents=True)
+    nginx_config = base / 'nginx.conf'
+    nginx_config.write_text(f'user www-data;\nworker_processes 1;\ndaemon off;\npid {base}/nginx.pid;\n'
+                           f'error_log {base}/nginx.log;\nevents {{}}\nhttp {{\n'
+                           f'access_log {base}/https-access.log;\nserver {{\n'
+                           f'listen 127.0.0.1:{https_port} ssl;\n'
+                           f'ssl_certificate {certificate};\nssl_certificate_key {certificate_key};\n'
+                           f'root {deploy_path}/current/public;\nindex index.php;\n'
+                           'location / { try_files $uri $uri/ /index.php?$args; }\n'
+                           'location ~ \\.php$ {\ninclude /etc/nginx/fastcgi_params;\n'
+                           'fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n'
+                           'fastcgi_param HTTPS on;\nfastcgi_param HTTP_HOST fixture.invalid;\n'
+                           f'fastcgi_pass unix:{socket_path};\n}}\n}}\n}}\n')
+    verifier = base / 'verify-https.php'
+    verifier.write_text('<?php\n'
+        + "add_filter('pre_http_request', static function ($pre, $args, $url) {\n"
+        + " if (!str_starts_with($url, 'https://fixture.invalid/')) { return $pre; }\n"
+        + " $args['sslcertificates'] = " + json.dumps(str(certificate)) + ";\n"
+        + " return wp_remote_get(" + json.dumps(f'https://127.0.0.1:{https_port}')
+        + " . substr($url, strlen('https://fixture.invalid')), $args);\n"
+        + "}, 10, 3);\nrequire "
+        + json.dumps(str(deploy_path / 'shared/sympress-tools/verify-build.php')) + ";\n")
     database = 'sympress_review_deploy_go'
     run(['mariadb', '-e', f'CREATE DATABASE `{database}`; CREATE USER IF NOT EXISTS go_review@127.0.0.1; GRANT ALL ON `{database}`.* TO go_review@127.0.0.1;'])
     env_text = ('WORDPRESS_ENV=production\nWP_HOME=https://fixture.invalid\nWP_SITEURL=${WP_HOME}\n'
@@ -135,14 +162,14 @@ def main():
         + "task('deploy:fpm-check', static function (): void { run('test -S {{php_fpm_socket}} && test -w {{php_fpm_socket}}'); run('getent group {{log_group}} >/dev/null'); run('command -v setfacl'); });\n"
         + "task('deploy:fpm-reload', static function (): void { run('kill -USR2 $(cat " + str(base / 'fpm.pid') + ")'); });\n"
         + "task('deploy:published-health', static function (): void {\n"
-        + " $body = run('env -i SCRIPT_FILENAME={{current_path}}/public/index.php SCRIPT_NAME=/index.php REQUEST_METHOD=GET SERVER_PROTOCOL=HTTP/1.1 REDIRECT_STATUS=200 HTTP_HOST=fixture.invalid HTTPS=on QUERY_STRING=rest_route=/sympress/v1/health REQUEST_URI=/?rest_route=/sympress/v1/health /usr/bin/cgi-fcgi -bind -connect {{php_fpm_socket}}');\n"
-        + " $json = json_decode(substr($body, strpos($body, '{')), true, flags: JSON_THROW_ON_ERROR);\n"
-        + " if (($json['status'] ?? '') !== 'ok' || !str_starts_with($json['build_id'] ?? '', 'release-' . str_repeat('a', 40) . '-')) { throw new \\RuntimeException('Native FPM health failed: ' . $body); }\n});\n")
+        + " run('cd {{current_path}} && {{bin/php}} wp-cli.phar eval-file " + str(verifier) + "');\n});\n")
     recipe.chmod(0o644)
     processes = []
     try:
         processes.append(subprocess.Popen(['/usr/sbin/sshd', '-D', '-e', '-f', str(ssh_config)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
         processes.append(subprocess.Popen(['php-fpm8.5', '-F', '-y', str(fpm_config)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
+        run(['nginx', '-t', '-p', str(base), '-c', str(nginx_config)])
+        processes.append(subprocess.Popen(['nginx', '-p', str(base), '-c', str(nginx_config)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL))
         for _ in range(100):
             if socket_path.exists():
                 break
@@ -151,7 +178,14 @@ def main():
         with sudoers.open('a') as stream:
             stream.write('sympress-probe ALL=(root) NOPASSWD: /bin/kill -USR2 *\n')
         recipe.write_text(recipe.read_text().replace("run('kill -USR2", "run('sudo -n /bin/kill -USR2"))
+        user_run(['php', 'wp-cli.phar', 'option', 'update', 'permalink_structure', ''])
+        user_run(['php', 'wp-cli.phar', 'eval',
+                  "if (get_option('permalink_structure') !== '') { WP_CLI::error('Expected plain permalinks.'); }"])
+        previous = None
         for iteration in range(2):
+            if iteration:
+                previous = current
+                user_run(['php', 'wp-cli.phar', 'option', 'update', 'permalink_structure', '/%postname%/'], cwd=current)
             output = user_run(['php', str(source / 'deployment/vendor/bin/dep'), '-f', str(recipe), 'deploy', 'production', '-n', '--no-ansi'], cwd=source)
             print(output[-600:])
             current = (deploy_path / 'current').resolve(strict=True)
@@ -159,6 +193,11 @@ def main():
             assert (current / 'public/wp/wp-load.php').is_file()
             assert (current / 'var/cache').stat().st_mode & 0o777 == 0o750
             assert not (deploy_path / '.dep/deploy.lock').exists()
+        assert '?rest_route=' in (base / 'https-access.log').read_text()
+        user_run(['php', str(source / 'deployment/vendor/bin/dep'), '-f', str(recipe), 'rollback', 'production', '-n', '--no-ansi'], cwd=source)
+        assert (deploy_path / 'current').resolve(strict=True) == previous
+        assert not (deploy_path / '.dep/deploy.lock').exists()
+        current = previous
         cache = current / 'var/cache'
         cache.chmod(0o770)
         negative = subprocess.run(['sudo', '-u', 'www-data', 'php', str(current / 'vendor/bin/runtime'), 'doctor', '--production', '--json', '--php-user=www-data', '-n'],
@@ -174,7 +213,8 @@ def main():
         assert failed.returncode != 0, failed.stdout + failed.stderr
         assert (deploy_path / 'current').resolve(strict=True) == current, failed.stdout + failed.stderr
         assert not (deploy_path / '.dep/deploy.lock').exists()
-        print(json.dumps({'deploys': 2, 'failed_health_rollback': 'pass', 'doctor_identity': 'www-data',
+        print(json.dumps({'deploys': 2, 'permalinks': ['plain', 'pretty'], 'published_verifier': 'verified HTTPS',
+                          'manual_rollback': 'pass', 'failed_health_rollback': 'pass', 'doctor_identity': 'www-data',
                           'cache_mode': '0750', 'ssh_agent_forwarding': False, 'fpm_health': 'ok'}))
     except Exception:
         candidates = sorted((deploy_path / 'releases').glob('*'))

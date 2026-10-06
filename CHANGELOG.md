@@ -4,6 +4,13 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.1.7 — 2026-10-06
+
+- Verify published build IDs through the query REST route for plain and pretty permalinks.
+- Match the nginx example's PHP-FPM socket to the deployment recipe.
+- Exercise the actual HTTPS build verifier and manual rollback on the disposable deploy host.
+- Advance the fixed update-canary source baseline to `v1.1.7`; dependency locks remain unchanged.
+
 ## 1.1.6 — 2026-10-06
 
 - Require and lock Runtime 1.2.4 and Monolog Bundle 1.1.4.
