@@ -4,6 +4,7 @@ Run as root only inside the disposable deploy-host container. Only the systemd
 reload boundary and public HTTPS probe are replaced; PHP-user doctor, upload,
 WordPress, database, cache permissions, symlink and FPM reset run for real.
 """
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -116,6 +117,16 @@ def main():
     # A pristine Core has no tables yet. Run its project WP-CLI commands only
     # after installation; deployment executes the complete Runtime normally.
     user_run(['php', 'vendor/bin/runtime', '--skip', 'db-check', 'wpcli', '-n'])
+    tool = payload / 'wp-cli.phar'
+    tool_config = json.loads((payload / 'dev-ops/runtime.json').read_text())
+    if not tool.exists():
+        version = tool_config['wp-cli-version']
+        run(['curl', '--fail', '--silent', '--show-error', '--location',
+             f'https://github.com/wp-cli/wp-cli/releases/download/v{version}/wp-cli-{version}.phar',
+             '--output', str(tool)])
+    assert hashlib.sha256(tool.read_bytes()).hexdigest() == tool_config['wp-cli-sha256']
+    tool.chmod(0o550)
+    os.chown(tool, identity.pw_uid, identity.pw_gid)
     user_run(['php', 'wp-cli.phar', 'core', 'install', '--url=https://fixture.invalid', '--title=Fixture',
               '--admin_user=probe', '--admin_password=' + secrets.token_hex(20), '--admin_email=probe@example.invalid', '--skip-email'])
     recipe = base / 'recipe.php'
