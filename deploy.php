@@ -69,7 +69,7 @@ function assertPhpUserDoctor(string $output): void
         throw new \RuntimeException('Runtime doctor for the PHP-FPM identity returned no readable report.');
     }
     $checks = is_array($report) && is_array($report['checks'] ?? null) ? $report['checks'] : [];
-    if ($checks === []) {
+    if ($checks === [] || !array_is_list($checks)) {
         throw new \RuntimeException('Runtime doctor for the PHP-FPM identity returned no checks.');
     }
     foreach ($checks as $check) {
@@ -77,7 +77,8 @@ function assertPhpUserDoctor(string $output): void
         $status = is_array($check) ? ($check['status'] ?? null) : null;
         // Same verdict as doctor's own exit code, minus the ACL-only readability unknowns.
         $tolerated = $status === 'unknown' && preg_match('/^production\.readable\.\d+$/D', $id) === 1;
-        if (!is_string($status) || $status === 'fail' || ($status === 'unknown' && !$tolerated)) {
+        if ($id === '' || !in_array($status, ['pass', 'warning', 'not-applicable', 'unverified', 'unknown'], true)
+            || ($status === 'unknown' && !$tolerated)) {
             throw new \RuntimeException('Runtime doctor for the PHP-FPM identity reported ' . (is_string($status) ? $status : 'invalid') . ' for ' . ($id !== '' ? $id : 'a check') . '.');
         }
     }
