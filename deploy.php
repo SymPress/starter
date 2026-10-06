@@ -103,13 +103,13 @@ task('deploy:fpm-reload', static function (): void {
 
 task('deploy:prepare-tools', static function (): void {
     // Rollback targets may predate these helpers. Keep the candidate tools outside releases.
-    foreach (['opcache-reset.php', 'verify-build.php'] as $file) {
+    foreach (['opcache-reset.php', 'verify-build.php', 'verify-runtime.php'] as $file) {
         if (!is_file(__DIR__ . '/dev-ops/' . $file) || !is_readable(__DIR__ . '/dev-ops/' . $file)) {
             throw new \RuntimeException('Candidate private FPM tools are unavailable.');
         }
     }
     run('test ! -L {{sympress_tools_path}} && install -d -m 0750 -g {{php_group}} {{sympress_tools_path}}');
-    foreach (['opcache-reset.php', 'verify-build.php'] as $file) {
+    foreach (['opcache-reset.php', 'verify-build.php', 'verify-runtime.php'] as $file) {
         $temporary = '{{sympress_tools_path}}/.' . $file . '-' . bin2hex(random_bytes(8));
         upload(__DIR__ . '/dev-ops/' . $file, $temporary);
         run('chgrp {{php_group}} ' . $temporary . ' && chmod 0640 ' . $temporary
@@ -227,10 +227,11 @@ task('deploy:permissions', static function (): void {
 task('deploy:health', static function (): void {
     // Before switching current, validate the actual WP configuration and DB.
     run('cd {{release_path}} && {{bin/php}} wp-cli.phar core is-installed');
-    run('cd {{release_path}} && {{bin/php}} wp-cli.phar eval ' . escapeshellarg(
-        'if (wp_get_environment_type() !== "production" && wp_get_environment_type() !== "staging") { exit(1); }'
-        . 'if (!DISALLOW_FILE_EDIT || !DISALLOW_FILE_MODS || WP_DEBUG_DISPLAY || !FORCE_SSL_ADMIN) { exit(1); }',
-    ));
+    // File-editing policy belongs to the web SAPI; Runtime intentionally exempts WP-CLI.
+    run('set -o pipefail; env -i SCRIPT_FILENAME={{sympress_tools_path}}/verify-runtime.php '
+        . 'SYMPRESS_RELEASE_PATH={{release_path}} SCRIPT_NAME=/verify-runtime.php REQUEST_METHOD=POST '
+        . 'SERVER_PROTOCOL=HTTP/1.1 REDIRECT_STATUS=200 '
+        . '/usr/bin/cgi-fcgi -bind -connect {{php_fpm_socket}} | grep -Fq ' . escapeshellarg('"runtime_health":"ok"'));
 });
 
 task('deploy', [

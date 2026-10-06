@@ -108,6 +108,16 @@ class DeployTest(unittest.TestCase):
         self.assertIn('SCRIPT_FILENAME={{sympress_tools_path}}/opcache-reset.php', command)
         self.assertIn('set -o pipefail', command)
 
+    def test_prepublication_policy_runs_in_fpm_instead_of_wp_cli(self):
+        result = self.probe('deploy:health')
+        self.assertEqual(result.returncode, 0, result.stderr)
+        commands = json.loads(result.stdout)['commands']
+        self.assertIn('wp-cli.phar core is-installed', commands[0])
+        self.assertIn('SCRIPT_FILENAME={{sympress_tools_path}}/verify-runtime.php', commands[1])
+        self.assertIn('SYMPRESS_RELEASE_PATH={{release_path}}', commands[1])
+        self.assertIn('cgi-fcgi -bind -connect {{php_fpm_socket}}', commands[1])
+        self.assertFalse(any('DISALLOW_FILE_EDIT' in command for command in commands))
+
     def test_published_health_runs_from_current_after_switch_and_rollback(self):
         result = self.probe('deploy:published-health')
         self.assertEqual(result.returncode, 0, result.stderr)
@@ -140,7 +150,7 @@ class DeployTest(unittest.TestCase):
                 destination.parent.mkdir(parents=True, exist_ok=True)
                 destination.write_bytes(Path(upload['source']).read_bytes())
                 self.assertNotIn(current, destination.parents)
-            self.assertEqual(len(recipe['uploads']), 2)
+            self.assertEqual(len(recipe['uploads']), 3)
             self.assertFalse((retained / 'dev-ops').exists())
             self.assertEqual(current.resolve(), retained)
             self.assertIn('0750', recipe['commands'][0])

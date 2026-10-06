@@ -9,6 +9,10 @@ which represent ACL readability that the deploy identity cannot verify. Failed
 checks, other unknowns, malformed checks and empty reports stop deployment.
 SSH agent forwarding to production and staging hosts is disabled.
 
+Before publication, WordPress hardening and database access are checked through
+the private FPM socket. WP-CLI intentionally uses a different file-editing policy;
+the recipe no longer dereferences its undefined `DISALLOW_FILE_EDIT` constant.
+
 Locked dependencies are unchanged. Scheduled dependency-update canaries start
 from `v1.1.5`. Security remains private and is absent from the manifest, lockfile
 and MU-plugin loader.

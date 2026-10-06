@@ -9,6 +9,7 @@ The project follows semantic versioning once the first stable release is tagged.
 - Keep the release-local kernel cache out of group-writable directories.
 - Evaluate the PHP-user production doctor report and accept only cross-identity readability unknowns; reject failed and malformed checks.
 - Disable SSH agent forwarding to deployment hosts.
+- Check prepublication WordPress hardening and database access through the private FPM socket, where the web policy applies.
 - Advance the fixed update-canary source baseline to `v1.1.5`; locked dependencies remain unchanged.
 
 ## 1.1.4 — 2026-10-05
