@@ -4,6 +4,13 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.1.6 — 2026-10-06
+
+- Require and lock Runtime 1.2.4 and Monolog Bundle 1.1.4.
+- Exercise two complete deployments on an isolated SSH/MariaDB/FPM host in CI.
+- Strip tracking-only queries from PHP request parameters and the nginx cache key while keeping semantic queries uncached.
+- Advance the fixed update-canary source baseline to `v1.1.6`; preserve the production-doctor and private FPM checks from 1.1.5.
+
 ## 1.1.5 — 2026-10-06
 
 - Keep the release-local kernel cache out of group-writable directories.

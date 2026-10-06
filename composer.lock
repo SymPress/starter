@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "6e2a277601af26f32cd8240e9b7fc95b",
+    "content-hash": "27d4b51b2dc65b5518ccb97b5747c222",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -4885,16 +4885,16 @@
         },
         {
             "name": "sympress/monolog-bundle",
-            "version": "v1.1.3",
+            "version": "v1.1.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/monolog-bundle.git",
-                "reference": "f9b5ece3bfb87215dabb321d703990a4307c3f4e"
+                "reference": "8e3abec193381de2eba5ead6713b05bd5e86e5c8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/monolog-bundle/zipball/f9b5ece3bfb87215dabb321d703990a4307c3f4e",
-                "reference": "f9b5ece3bfb87215dabb321d703990a4307c3f4e",
+                "url": "https://api.github.com/repos/SymPress/monolog-bundle/zipball/8e3abec193381de2eba5ead6713b05bd5e86e5c8",
+                "reference": "8e3abec193381de2eba5ead6713b05bd5e86e5c8",
                 "shasum": ""
             },
             "require": {
@@ -4935,22 +4935,22 @@
             "description": "Monolog integration bundle for the WordPress kernel.",
             "support": {
                 "issues": "https://github.com/SymPress/monolog-bundle/issues",
-                "source": "https://github.com/SymPress/monolog-bundle/tree/v1.1.3"
+                "source": "https://github.com/SymPress/monolog-bundle/tree/v1.1.4"
             },
-            "time": "2026-10-03T16:53:23+00:00"
+            "time": "2026-10-05T20:18:38+00:00"
         },
         {
             "name": "sympress/runtime",
-            "version": "v1.2.3",
+            "version": "v1.2.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/runtime.git",
-                "reference": "bfcd0541d5a29b95c2089661af668bb8558daac6"
+                "reference": "7d0658af2af55c6b34c7b271092738baa4f50068"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/runtime/zipball/bfcd0541d5a29b95c2089661af668bb8558daac6",
-                "reference": "bfcd0541d5a29b95c2089661af668bb8558daac6",
+                "url": "https://api.github.com/repos/SymPress/runtime/zipball/7d0658af2af55c6b34c7b271092738baa4f50068",
+                "reference": "7d0658af2af55c6b34c7b271092738baa4f50068",
                 "shasum": ""
             },
             "require": {
@@ -5016,7 +5016,7 @@
                 "issues": "https://github.com/SymPress/runtime/issues",
                 "source": "https://github.com/SymPress/runtime"
             },
-            "time": "2026-10-05T11:40:12+00:00"
+            "time": "2026-10-06T11:56:08+00:00"
         },
         {
             "name": "sympress/wp-cli-console",

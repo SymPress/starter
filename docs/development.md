@@ -17,7 +17,7 @@ DDEV's `ddev.site` wildcard DNS is the default so setup should not need administ
 
 Composer install and update intentionally run SymPress Runtime through the Composer plugin. SymPress Runtime installs, syncs, and regenerates the WordPress project files and plugin/theme layout.
 
-The project requires Runtime 1.2.3 or later and Kernel 1.1.5 or later so outbound HTTP blocking remains an explicit choice and diagnostics share the JSON cache-metadata contract with the kernel.
+The project requires Runtime 1.2.4 or later and Kernel 1.1.5 or later so environment-cache reads preserve OPcache, outbound HTTP blocking remains an explicit choice and diagnostics share the JSON cache-metadata contract with the kernel.
 
 The native configuration is `dev-ops/runtime.json`. Runtime downloads the pinned
 WP-CLI PHAR and records its integrity in `sympress-runtime.lock`; retain this lock

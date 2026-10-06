@@ -59,3 +59,33 @@ jobs:
               raise SystemExit('Native operation fixtures must run without skipped tests.')
           raise SystemExit(0 if result.wasSuccessful() else 1)
           PY
+
+  deploy-recipe:
+    name: Complete recipe on disposable SSH host
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build isolated SSH, MariaDB and FPM host
+        run: docker build --tag sympress-deploy-host --file dev-ops/tests/deploy-host.Dockerfile .
+      - name: Exercise deployments, PHP-user checks and failed-health recovery
+        run: |
+          docker run --rm --volume "$GITHUB_WORKSPACE:/workspace" sympress-deploy-host '
+            set -euo pipefail
+            git config --global --add safe.directory /workspace
+            install -d -o mysql -g mysql /run/mysqld
+            if [ ! -f /var/lib/mysql/ibdata1 ]; then
+              mariadb-install-db --user=mysql --datadir=/var/lib/mysql --skip-test-db >/dev/null
+            fi
+            mariadbd --user=mysql --bind-address=127.0.0.1 --skip-log-bin >/tmp/mariadb.log 2>&1 &
+            for attempt in {1..100}; do
+              mariadb-admin ping --silent >/dev/null 2>&1 && break
+              sleep .1
+            done
+            composer install --no-plugins --no-scripts --prefer-dist --no-interaction --no-progress
+            composer install --working-dir=deployment --no-plugins --no-scripts --prefer-dist --no-interaction --no-progress
+            python3 dev-ops/tests/deploy_host_probe.py
+          '
