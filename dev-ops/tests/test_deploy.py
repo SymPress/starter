@@ -197,7 +197,10 @@ class DeployTest(unittest.TestCase):
                 rejected = self.probe('deploy:permissions', PROBE_DOCTOR_JSON=self.doctor_report((check_id, status)))
                 self.assertEqual(rejected.returncode, 17)
                 self.assertIn(check_id, rejected.stderr)
-        for report in ('', 'not json', json.dumps({'checks': []})):
+        for report in ('', 'not json', json.dumps({'checks': []}),
+                       json.dumps({'checks': {'first': {'id': 'kernel.cache', 'status': 'pass'}}}),
+                       self.doctor_report(('kernel.cache', 'invalid-status')),
+                       self.doctor_report(('', 'pass'))):
             with self.subTest(report=report):
                 self.assertEqual(self.probe('deploy:permissions', PROBE_DOCTOR_JSON=report).returncode, 17)
 

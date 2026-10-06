@@ -4,6 +4,13 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.1.5 — 2026-10-06
+
+- Keep the release-local kernel cache out of group-writable directories.
+- Evaluate the PHP-user production doctor report and accept only cross-identity readability unknowns; reject failed and malformed checks.
+- Disable SSH agent forwarding to deployment hosts.
+- Advance the fixed update-canary source baseline to `v1.1.5`; locked dependencies remain unchanged.
+
 ## 1.1.4 — 2026-10-05
 
 - Require and lock Runtime 1.2.3 and Kernel 1.1.5, keeping outbound HTTP blocking opt-in and mutable cache metadata fresh without reader invalidation.
