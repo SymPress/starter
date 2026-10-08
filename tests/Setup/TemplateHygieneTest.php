@@ -13,7 +13,7 @@ final class TemplateHygieneTest extends TestCase
     {
         $config = json_decode((string) file_get_contents($this->projectDir . '/dev-ops/runtime.json'), true, flags: JSON_THROW_ON_ERROR);
         self::assertTrue($config['kernel-boot']);
-        self::assertTrue($config['wp-config-autoload']);
+        self::assertFalse($config['wp-config-autoload']);
         self::assertDirectoryDoesNotExist($this->projectDir . '/packages/base-mu-plugins');
         $lock = json_decode((string) file_get_contents($this->projectDir . '/composer.lock'), true, flags: JSON_THROW_ON_ERROR);
         $names = array_column($lock['packages'], 'name');
