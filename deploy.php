@@ -199,7 +199,6 @@ task('deploy:runtime', static function (): void {
     run('cd {{release_path}} && {{bin/php}} vendor/bin/runtime --no-interaction');
     run('cd {{release_path}} && {{bin/php}} bin/console lint:container --no-interaction');
     run('cd {{release_path}} && {{bin/php}} vendor/bin/runtime dump-env ' . escapeshellarg(get('stage')) . ' --no-interaction');
-    run('cd {{release_path}} && {{bin/php}} vendor/bin/runtime doctor --production --database-health --no-interaction');
 });
 
 task('deploy:permissions', static function (): void {
@@ -219,6 +218,8 @@ task('deploy:permissions', static function (): void {
         run('find ' . $shared . ' -type f -exec chmod 0660 {} +');
     }
     // Release-specific warmed kernel cache is read-only to FPM under build-ID policy.
+    // Early Composer autoload makes the effective configuration require an FPM probe.
+    run('cd {{release_path}} && {{bin/php}} vendor/bin/runtime doctor --production --database-health --no-interaction');
     // Exit 1 (fail) aborts here; exit 2 (unknown) is evaluated check by check below.
     assertPhpUserDoctor(run('cd {{release_path}} && ({{bin/php}} vendor/bin/runtime doctor --production --database-health '
         . '--php-user={{php_user}} --json --no-interaction || test $? -eq 2)'));

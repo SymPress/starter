@@ -1,5 +1,9 @@
 # SymPress Starter
 
+Runtime generates the kernel bootstrap. The public website's existing deployment
+health, staging mail and XML-RPC policies live in `packages/site-policy`; they
+do not require the private Natterer-Schaeffner base MU plugin.
+
 Composer project starter and GitHub template for new WordPress websites in the SymPress ecosystem. The starter ships with a DDEV-ready local environment, Composer-managed WordPress core, a generated SymPress kernel bootstrap, and default quality tooling.
 
 ## What is included
