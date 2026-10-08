@@ -141,8 +141,11 @@ class DeployTest(unittest.TestCase):
     def test_published_health_runs_from_current_after_switch_and_rollback(self):
         result = self.probe('deploy:published-health')
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual(json.loads(result.stdout)['commands'], [
-            'cd {{current_path}} && {{bin/php}} wp-cli.phar eval-file {{sympress_tools_path}}/verify-build.php'])
+        command = json.loads(result.stdout)['commands'][0]
+        self.assertIn('set -o pipefail; env -i', command)
+        self.assertIn('SYMPRESS_RELEASE_PATH={{current_path}}', command)
+        self.assertIn('cgi-fcgi -bind -connect {{php_fpm_socket}}', command)
+        self.assertIn('| (cd {{current_path}} && {{bin/php}} wp-cli.phar eval-file {{sympress_tools_path}}/verify-build.php)', command)
 
     def test_failed_reset_still_reloads_fpm_after_switch(self):
         result = self.probe('deploy:refresh', PROBE_FAIL_RESET='1')

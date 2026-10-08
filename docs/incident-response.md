@@ -15,7 +15,7 @@
 5. Establish the entry point and scope, fix the code/configuration and rotate
    affected application, deployment and service credentials. Run package QA,
    audits and the production doctor gates on the candidate artifact.
-6. The operator chooses the site recovery procedure. Validate the public health
+6. The operator chooses the site recovery procedure. Validate the private FPM health
    build ID, normal authenticated editor flow and suspicious endpoints afterward.
    Record unresolved evidence and monitor for recurrence.
 7. Document cause, impact, corrective actions and owners. Assess required customer

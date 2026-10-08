@@ -26,7 +26,7 @@ OPENSSL = shutil.which('openssl')
 
 class ProductionDefaultsTest(unittest.TestCase):
     @unittest.skipUnless(shutil.which('php'), 'The private WordPress verifier requires PHP.')
-    def test_publication_verifier_uses_query_route_and_rejects_redirects_or_stale_builds(self):
+    def test_publication_verifier_rejects_failed_stale_malformed_and_oversized_fpm_reports(self):
         helper = Path(__file__).resolve().parents[1] / 'verify-build.php'
         code = r'''
 define('WP_CLI', true);
@@ -35,35 +35,28 @@ class WP_CLI {
     public static function error($message) { fwrite(STDERR, $message); exit(17); }
     public static function success($message) { echo $message; }
 }
-function home_url($path) { return $GLOBALS['argv'][2] . $path; }
-function wp_parse_url($url, $component) { return parse_url($url, $component); }
-function add_query_arg($key, $value, $url) {
-    return $url . (str_contains($url, '?') ? '&' : '?') . http_build_query([$key => $value]);
-}
-function wp_remote_get($url, $options) {
-    echo json_encode(['url' => $url, 'options' => $options]) . "\n";
-    return ['code' => (int) $GLOBALS['argv'][3], 'body' => json_encode([
-        'status' => 'ok', 'build_id' => $GLOBALS['argv'][4]])];
-}
-function is_wp_error($response) { return false; }
-function wp_remote_retrieve_body($response) { return $response['body']; }
-function wp_remote_retrieve_response_code($response) { return $response['code']; }
 require $argv[1];
 '''
-        for home in ('https://fixture.invalid', 'https://fixture.invalid/shop'):
-            for status, build in ((200, 'release-probe'), (301, 'release-probe'),
-                                  (503, 'release-probe'), (200, 'stale')):
-                with self.subTest(home=home, status=status, build=build):
-                    result = subprocess.run(['php', '-r', code, str(helper), home, str(status), build],
-                                            text=True, capture_output=True, timeout=10)
-                    self.assertEqual(result.returncode, 0 if status == 200 and build == 'release-probe' else 17)
-                    captured = json.loads(result.stdout.splitlines()[0])
-                    url = urllib.parse.urlsplit(captured['url'])
-                    self.assertEqual(url.path, urllib.parse.urlsplit(home).path + '/')
-                    self.assertEqual(urllib.parse.parse_qs(url.query), {
-                        'rest_route': ['/sympress/v1/health'], 'sympress_build_probe': ['release-probe']})
-                    self.assertEqual(captured['options']['redirection'], 0)
-                    self.assertTrue(captured['options']['sslverify'])
+        healthy = json.dumps({'runtime_health': 'ok', 'build_id': 'release-probe'})
+        header = 'Content-Type: application/json\r\n\r\n'
+        for report, expected in [
+            (header + healthy, 0), (header.replace('\r\n', '\n') + healthy, 0),
+            ('Status: 503 Service Unavailable\r\n' + header + healthy, 17),
+            ('Status: 301 Moved\r\n' + header + healthy, 17),
+            (header + json.dumps({'runtime_health': 'ok', 'build_id': 'stale'}), 17),
+            (header + json.dumps({'runtime_health': 'error', 'build_id': 'release-probe'}), 17),
+            (header + json.dumps({'runtime_health': 'ok', 'build_id': None}), 17),
+            (header + json.dumps({'runtime_health': 'ok', 'build_id': '../invalid'}), 17),
+            (header + 'not-json', 17), (healthy, 17), ('', 17),
+            ((header + healthy).ljust(4096), 0), ((header + healthy).ljust(4097), 17),
+            ((header + healthy).ljust(1024 * 1024), 17),
+        ]:
+            with self.subTest(report=report[:160], length=len(report)):
+                result = subprocess.run(['php', '-r', code, str(helper)], input=report,
+                                        text=True, capture_output=True, timeout=10)
+                self.assertEqual(result.returncode, expected, result.stderr)
+                if expected:
+                    self.assertNotIn('Published health matches', result.stdout)
 
     def test_nginx_and_recipe_use_the_same_default_fpm_socket(self):
         root = Path(__file__).resolve().parents[2]
@@ -75,43 +68,6 @@ require $argv[1];
                             '--root', '/srv/fixture', '--output', directory], check=True, capture_output=True)
             server = (Path(directory) / 'production-server.conf').read_text()
             self.assertIn('fastcgi_pass unix:' + default.group(1) + ';', server)
-
-    @unittest.skipUnless(shutil.which('php'), 'The private WordPress verifier requires PHP.')
-    def test_publication_verifier_bounds_health_body_before_decoding(self):
-        helper = Path(__file__).resolve().parents[1] / 'verify-build.php'
-        code = r'''
-define('WP_CLI', true);
-define('SYMPRESS_KERNEL_BUILD_ID', 'release-probe');
-class WP_CLI {
-    public static function error($message) { fwrite(STDERR, $message); exit(17); }
-    public static function success($message) { echo $message; }
-}
-function home_url($path) { return 'https://fixture.invalid' . $path; }
-function wp_parse_url($url, $component) { return parse_url($url, $component); }
-function add_query_arg($key, $value, $url) { return $url; }
-function wp_remote_get($url, $options) {
-    echo json_encode($options) . "\n";
-    return ['body' => stream_get_contents(STDIN)];
-}
-function is_wp_error($response) { return false; }
-function wp_remote_retrieve_body($response) { return $response['body']; }
-function wp_remote_retrieve_response_code($response) { return 200; }
-require $argv[1];
-'''
-        body = json.dumps({'status': 'ok', 'build_id': 'release-probe'})
-        for size in [len(body), 4096, 4097, 1024 * 1024]:
-            with self.subTest(bytes=size):
-                result = subprocess.run(['php', '-r', code, str(helper)],
-                                        input=body + ' ' * (size - len(body)),
-                                        text=True, capture_output=True, timeout=10)
-                self.assertEqual(result.returncode, 0 if size <= 4096 else 17, result.stderr)
-                options = json.loads(result.stdout.splitlines()[0])
-                self.assertEqual(options.get('limit_response_size'), 4097)
-                self.assertEqual(options['redirection'], 0)
-                self.assertTrue(options['sslverify'])
-                if size > 4096:
-                    self.assertNotIn('Published health matches', result.stdout)
-                    self.assertEqual(result.stderr, 'Published health is unavailable or unhealthy.')
 
     def test_hsts_is_explicit_and_shared_headers_cover_all_locations(self):
         root = Path(__file__).resolve().parents[1]

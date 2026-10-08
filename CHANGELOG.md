@@ -4,6 +4,13 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.2.0 — 2026-10-08
+
+- Remove the local Base MU and site-policy packages. Shared website policies now belong to the separately installed private Natterer-Schaeffner Security bundle; the public Starter has no private dependency.
+- Verify published releases and rollback build IDs through the private PHP-FPM socket, retaining Core policy and database checks without a public health route.
+- Refuse staging imports before decryption or mutation when no active WordPress mail guard is present.
+- Advertise Starter 1.2.0 to the CLI and advance the fixed update-canary source baseline.
+
 ## 1.1.8 — 2026-10-06
 
 - Advertise the stable Starter tag to the CLI; older remote catalog defaults do not override an explicitly selected version.

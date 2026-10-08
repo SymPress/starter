@@ -19,6 +19,12 @@ def run_case(source, deployer, fpm_binary, failure):
         for name in ('old', 'new'):
             release = root / 'releases' / name
             (release / 'public').mkdir(parents=True)
+            (release / 'public/wp').mkdir()
+            (release / 'public/wp/wp-load.php').write_text(
+                '<?php define("SYMPRESS_KERNEL_BUILD_ID", ' + php_literal(name) + '); '
+                + 'define("DISALLOW_FILE_MODS", true); define("WP_DEBUG_DISPLAY", false); define("FORCE_SSL_ADMIN", true); '
+                + 'function wp_get_environment_type() { return "production"; } function wp_is_file_mod_allowed($context) { return false; } '
+                + '$GLOBALS["wpdb"] = new class { public function get_var($query) { return "1"; } };')
             (release / 'public/index.php').write_text(
                 '<?php echo json_encode(["build_id"=>' + php_literal(name) + ']);')
             (release / 'wp-cli.phar').write_text("""<?php
@@ -28,18 +34,6 @@ class WP_CLI {
     public static function error($message) { fwrite(STDERR, $message); exit(1); }
     public static function success($message) { file_put_contents('verified.marker', $message); }
 }
-function home_url($path) { return 'https://fixture.invalid' . $path; }
-function wp_parse_url($url, $part) { return parse_url($url, $part); }
-function add_query_arg($key, $value, $url) { return $url . '?' . $key . '=' . $value; }
-function wp_remote_get($url, $options) {
-    if ($options['redirection'] !== 0 || $options['sslverify'] !== true) {
-        WP_CLI::error('Unsafe HTTP verification options.');
-    }
-    return ['response' => ['code' => 200], 'body' => json_encode(['status' => 'ok', 'build_id' => SYMPRESS_KERNEL_BUILD_ID])];
-}
-function is_wp_error($response) { return false; }
-function wp_remote_retrieve_body($response) { return $response['body']; }
-function wp_remote_retrieve_response_code($response) { return $response['response']['code']; }
 require $argv[2];
 """)
         current = root / 'current'
@@ -123,7 +117,7 @@ php_admin_value[realpath_cache_ttl]=600
                 assert (root / 'releases/old/verified.marker').exists(), output[-2500:]
             return {'failure': failure, 'published_new': published, 'current': 'old',
                     'fpm_build': 'old', 'unlocked': failure not in ('before_lock', 'lock_conflict'), 'separate_native_workers': True,
-                    'http_validation': 'isolated WP-CLI transport double'}
+                    'fpm_validation': 'native private pool with isolated Core configuration double'}
         finally:
             pool.terminate()
             try:

@@ -11,19 +11,13 @@ $buildId = defined('SYMPRESS_KERNEL_BUILD_ID') ? constant('SYMPRESS_KERNEL_BUILD
 if (!is_string($buildId) || !preg_match('/^[A-Za-z0-9._-]{1,128}$/D', $buildId)) {
     WP_CLI::error('The current release has no valid build ID.');
 }
-// The query route also works before pretty permalinks have been configured.
-$url = add_query_arg('rest_route', '/sympress/v1/health', home_url('/'));
-if (wp_parse_url($url, PHP_URL_SCHEME) !== 'https') {
-    WP_CLI::error('Published health verification requires the canonical HTTPS site.');
-}
-$response = wp_remote_get(add_query_arg('sympress_build_probe', $buildId, $url), [
-    'timeout' => 15, 'redirection' => 0, 'sslverify' => true, 'limit_response_size' => 4097,
-    'headers' => ['Cache-Control' => 'no-cache'],
-]);
-$rawBody = is_wp_error($response) ? null : wp_remote_retrieve_body($response);
-$body = is_string($rawBody) && strlen($rawBody) <= 4096 ? json_decode($rawBody, true) : null;
-if (is_wp_error($response) || wp_remote_retrieve_response_code($response) !== 200
-    || !is_array($body) || ($body['status'] ?? '') !== 'ok') {
+// The trusted recipe pipes the private pool's CGI response into this process.
+$raw = stream_get_contents(STDIN, 4097);
+$parts = is_string($raw) && strlen($raw) <= 4096 ? preg_split('/\r?\n\r?\n/', $raw, 2) : false;
+$headers = is_array($parts) && count($parts) === 2 ? $parts[0] : '';
+$body = is_array($parts) && count($parts) === 2 ? json_decode($parts[1], true) : null;
+$status = preg_match('/^Status:\s*(\d{3})\b/im', $headers, $match) ? (int) $match[1] : 200;
+if ($status !== 200 || !is_array($body) || ($body['runtime_health'] ?? '') !== 'ok') {
     WP_CLI::error('Published health is unavailable or unhealthy.');
 }
 if (!is_string($body['build_id'] ?? null) || !preg_match('/^[A-Za-z0-9._-]{1,128}$/D', $body['build_id'])) {

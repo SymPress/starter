@@ -30,10 +30,11 @@ checks the active service and sudo permission before deploy or rollback.
 Install `acl` for `setfacl`, and `libfcgi-bin` for `/usr/bin/cgi-fcgi`; give the deploy identity access to the
 private pool socket. `SYMPRESS_FPM_SOCKET` defaults to `/run/php/php8.5-fpm.sock`.
 The nginx template uses the same socket; update its `fastcgi_pass` as well when
-selecting a custom pool. Published build verification uses
-`/?rest_route=/sympress/v1/health` on the canonical HTTPS site, so both plain and
-pretty permalinks work. It requires a direct 200 response with the current build
-ID and continues to reject redirects, TLS errors and stale releases.
+selecting a custom pool. Published build verification uses the private FPM socket
+to inspect the active release's actual WordPress configuration, database and build
+ID. It requires a healthy response with the exact current build ID and rejects
+malformed, oversized and stale reports. No public REST endpoint or private package
+is required. Test the canonical HTTPS site separately after deploying.
 Supply independently verified `SSH_KNOWN_HOSTS`; dependency install credentials
 must be a separate read-only key and must end before any lifecycle/build code.
 
@@ -124,7 +125,7 @@ permission provisioning. Never make the project root the HTTP docroot.
 
 After switching the release symlink and after an existing rollback, the recipe
 gracefully reloads FPM, resets OPcache through its private Unix socket, and checks
-the canonical HTTPS health endpoint against the current
+the private FPM health response against the current
 release's `SYMPRESS_KERNEL_BUILD_ID`. A failed reset, reload or Build-ID check fails
 the operation before deploy cleanup. Candidate helpers are installed privately in
 `shared/sympress-tools`, so retained releases need no helper files. A retained
@@ -298,7 +299,9 @@ production personal data and integration secrets even while encrypted.
 
 For staging, provision a separate DB, private staging `.env` with
 `WORDPRESS_ENV=staging`, `DISABLE_WP_CRON=true`, canonical staging WP_HOME and outbound
-network restrictions **before** importing. Staging mail is disabled by the MU policy.
+network restrictions **before** importing. Activate the private Security MU loader
+or a project-owned staging mail guard first. Sync checks that `pre_wp_mail` blocks
+mail and refuses before decryption or database changes if no guard is active.
 Select/write a reviewed private scrub PHP script that rotates/removes copied users'
 passwords/tokens, API/webhook/payment credentials and personal data for that site.
 There is no universal safe scrub for arbitrary plugins; sync refuses without it.
@@ -316,8 +319,11 @@ is intentionally escaped as `%%`. Run `systemd-analyze verify` before enabling.
 
 ## Uptime/error and canary notifications
 
-The read-only `/wp-json/sympress/v1/health` endpoint performs `SELECT 1` and returns
-only `status`, with 503 for DB failure; nginx bypasses its page cache. The supplied
+The starter does not ship a public health endpoint. The optional private
+`natterer-schaeffner/bundle-security` MU loader provides
+`/wp-json/sympress/v1/health`, returning `status` and an optional opaque `build_id`,
+with 503 for DB failure. Alternatively supply your own application health endpoint
+and update `health_url` in the private monitor configuration. The supplied
 monitor checks canonical HTTPS, the status and newly appended fatal/uncaught/error
 log lines. Set `log_glob` to `production-????-??-??.log` for the supplied Monolog
 rotating handler. Each file has its own private byte cursor, so late records in
@@ -373,7 +379,7 @@ Both Runtime configs pin WP-CLI v2.12.0 with SHA256
 verified against the official release PHAR. Retain `sympress-runtime.lock`; a GitHub
 metadata outage does not require floating latest or an integrity bypass.
 
-The public health response exposes only generic status and the opaque Build-ID
+The optional Security bundle's public health response exposes only generic status and the opaque Build-ID
 (`null` in development without an ID), never configuration or credentials. The
 monitor account needs the configured PHP log group; its systemd example uses
 `SupplementaryGroups=sympress-log`. Daily logs use `production-????-??-??.log`; new log
