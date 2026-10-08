@@ -183,7 +183,8 @@ def main():
             assert (current / 'var/cache').stat().st_mode & 0o777 == 0o750
             assert not (deploy_path / '.dep/deploy.lock').exists()
             run(['curl', '--fail', '--silent', '--show-error', '--cacert', str(certificate), f'https://127.0.0.1:{https_port}/'])
-            absent = user_run(['php', 'wp-cli.phar', 'eval', '$response = rest_do_request(new WP_REST_Request("GET", "/sympress/v1/health")); echo $response->get_status();'], cwd=current)
+            absent = run(['curl', '--silent', '--show-error', '--cacert', str(certificate), '--output', '/dev/null',
+                          '--write-out', '%{http_code}', f'https://127.0.0.1:{https_port}/?rest_route=/sympress/v1/health'])
             assert absent.strip() == '404', absent
         assert 'GET / ' in (base / 'https-access.log').read_text()
         user_run(['php', str(source / 'deployment/vendor/bin/dep'), '-f', str(recipe), 'rollback', 'production', '-n', '--no-ansi'], cwd=source)
