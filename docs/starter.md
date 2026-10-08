@@ -74,7 +74,7 @@ See [repository security controls](security-controls.md) for production boundari
 
 ## Package conventions
 
-Starter-owned code lives in `packages/base-mu-plugins` under the `SymPress\Starter` namespace. Project-specific packages should use their own package name and namespace instead of reusing the starter namespace.
+SymPress Runtime generates the kernel starter with `kernel-boot: true`. The public starter has no private base MU dependency. Project-specific packages should use their own package name and namespace instead of reusing the starter namespace.
 
 Recommended package naming:
 

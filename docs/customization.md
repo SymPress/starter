@@ -56,14 +56,8 @@ bin/console check
 bin/console doctor
 ```
 
-Run base MU plugin package checks from the package working directory:
-
-```sh
-ddev composer --working-dir=packages/base-mu-plugins cs
-ddev composer --working-dir=packages/base-mu-plugins static-analysis
-ddev composer --working-dir=packages/base-mu-plugins test
-ddev composer --working-dir=packages/base-mu-plugins qa
-```
+Runtime generates the kernel starter. Add project-owned packages and their checks
+when your website needs custom behavior.
 
 Run dependency security checks:
 

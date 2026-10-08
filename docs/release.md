@@ -3,7 +3,6 @@
 ## Package Names
 
 - Starter repository: `sympress/starter`
-- Base MU plugin package: `sympress/base-mu-plugins`
 
 ## Versioning
 
@@ -23,7 +22,6 @@ git push origin 1.0.0
 Enable Packagist auto-updates for:
 
 - `sympress/starter`
-- `sympress/base-mu-plugins`
 - `sympress/kernel`
 - `sympress/monolog-bundle`
 - `sympress/wp-cli-console`

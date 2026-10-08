@@ -4,7 +4,7 @@ includes:
 parameters:
     level: 6
     paths:
-        - packages/base-mu-plugins
+        - dev-ops/orchestrate.php
     
     excludePaths:
         - */vendor/*

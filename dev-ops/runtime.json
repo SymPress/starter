@@ -1,6 +1,8 @@
 {
     "compatibility": false,
     "compatibility-profile": "native",
+    "kernel-boot": true,
+    "wp-config-autoload": true,
     "composer-managed": "auto",
     "env-local-overrides": false,
     "env-example": false,

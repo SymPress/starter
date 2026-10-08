@@ -5,7 +5,6 @@
     "license": "GPL-2.0-or-later",
     "require": {
         "php": "^8.5",
-        "sympress/base-mu-plugins": "^1.0",
         "sympress/kernel": "^1.1.5",
         "sympress/monolog-bundle": "^1.1.4",
         "sympress/wp-cli-console": "^1.0.4",
@@ -91,16 +90,6 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "repositories": [
-        {
-            "type": "path",
-            "url": "./packages/*",
-            "options": {
-                "symlink": true,
-                "versions": {
-                    "sympress/base-mu-plugins": "1.0.0"
-                }
-            }
-        },
         {
             "type": "composer",
             "url": "https://wpackagist.org"
