@@ -30,13 +30,17 @@ def run_case(source, deployer, fpm_binary, outcome):
         for name in ('old', 'new'):
             release = root / 'releases' / name
             (release / 'public').mkdir(parents=True)
+            (release / 'public/wp').mkdir()
+            build_id = '' if name == 'old' and outcome == 'legacy' else 'define("SYMPRESS_KERNEL_BUILD_ID", ' + php_literal(name) + '); '
+            (release / 'public/wp/wp-load.php').write_text(
+                '<?php ' + build_id
+                + 'define("DISALLOW_FILE_MODS", true); define("WP_DEBUG_DISPLAY", false); define("FORCE_SSL_ADMIN", true); '
+                + 'function wp_get_environment_type() { return "production"; } function wp_is_file_mod_allowed($context) { return false; } '
+                + '$GLOBALS["wpdb"] = new class { public function get_var($query) { return "1"; } };')
             (release / 'public/index.php').write_text(
                 '<?php echo json_encode(["build_id"=>' + php_literal(name) + ']);')
         retained = root / 'releases/old'
         # A retained release deliberately contains neither new helper.
-        body = {'status': 'ok'}
-        if outcome != 'legacy':
-            body['build_id'] = 'old'
         (retained / 'wp-cli.phar').write_text("""<?php
 define('WP_CLI', true);
 define('SYMPRESS_KERNEL_BUILD_ID', 'old');
@@ -44,19 +48,6 @@ class WP_CLI {
     public static function error($message) { fwrite(STDERR, $message); exit(1); }
     public static function success($message) { file_put_contents('verified.marker', $message); echo $message; }
 }
-function home_url($path) { return 'https://fixture.invalid' . $path; }
-function wp_parse_url($url, $part) { return parse_url($url, $part); }
-function add_query_arg($key, $value, $url) { return $url . '?' . $key . '=' . $value; }
-function wp_remote_get($url, $options) {
-    if ($options['redirection'] !== 0 || $options['sslverify'] !== true
-        || parse_url($url, PHP_URL_SCHEME) !== 'https') {
-        WP_CLI::error('Unsafe HTTP verification options.');
-    }
-    return ['response' => ['code' => 200], 'body' => """ + php_literal(json.dumps(body)) + """];
-}
-function is_wp_error($response) { return false; }
-function wp_remote_retrieve_body($response) { return $response['body']; }
-function wp_remote_retrieve_response_code($response) { return $response['response']['code']; }
 require $argv[2];
 """)
         current = root / 'current'
@@ -134,7 +125,7 @@ php_admin_value[realpath_cache_ttl]=600
             return {'case': outcome, 'current': 'old', 'fpm_build': 'old',
                     'old_has_helpers': False, 'reload_ran': True,
                     'operation_succeeded': result.returncode == 0,
-                    'http_validation': 'isolated WP-CLI transport double'}
+                    'fpm_validation': 'native private pool with isolated Core configuration double'}
         finally:
             pool.terminate()
             try:

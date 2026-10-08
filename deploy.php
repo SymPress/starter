@@ -125,8 +125,12 @@ task('deploy:opcache-reset', static function (): void {
 });
 
 task('deploy:published-health', static function (): void {
-    // The current release computes its expected ID, then checks the public FPM response.
-    run('cd {{current_path}} && {{bin/php}} wp-cli.phar eval-file {{sympress_tools_path}}/verify-build.php');
+    // Verify the active FPM build without requiring a public or private-package REST endpoint.
+    run('set -o pipefail; env -i SCRIPT_FILENAME={{sympress_tools_path}}/verify-runtime.php '
+        . 'SYMPRESS_RELEASE_PATH={{current_path}} SCRIPT_NAME=/verify-runtime.php REQUEST_METHOD=POST '
+        . 'SERVER_PROTOCOL=HTTP/1.1 REDIRECT_STATUS=200 '
+        . '/usr/bin/cgi-fcgi -bind -connect {{php_fpm_socket}} '
+        . '| (cd {{current_path}} && {{bin/php}} wp-cli.phar eval-file {{sympress_tools_path}}/verify-build.php)');
 });
 
 task('deploy:refresh', ['deploy:fpm-reload', 'deploy:opcache-reset', 'deploy:published-health']);

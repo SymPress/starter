@@ -110,15 +110,6 @@ def main():
                            'fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n'
                            'fastcgi_param HTTPS on;\nfastcgi_param HTTP_HOST fixture.invalid;\n'
                            f'fastcgi_pass unix:{socket_path};\n}}\n}}\n}}\n')
-    verifier = base / 'verify-https.php'
-    verifier.write_text('<?php\n'
-        + "add_filter('pre_http_request', static function ($pre, $args, $url) {\n"
-        + " if (!str_starts_with($url, 'https://fixture.invalid/')) { return $pre; }\n"
-        + " $args['sslcertificates'] = " + json.dumps(str(certificate)) + ";\n"
-        + " return wp_remote_get(" + json.dumps(f'https://127.0.0.1:{https_port}')
-        + " . substr($url, strlen('https://fixture.invalid')), $args);\n"
-        + "}, 10, 3);\nrequire "
-        + json.dumps(str(deploy_path / 'shared/sympress-tools/verify-build.php')) + ";\n")
     database = 'sympress_review_deploy_go'
     run(['mariadb', '-e', f'CREATE DATABASE `{database}`; CREATE USER IF NOT EXISTS go_review@127.0.0.1; GRANT ALL ON `{database}`.* TO go_review@127.0.0.1;'])
     env_text = ('WORDPRESS_ENV=production\nWP_HOME=https://fixture.invalid\nWP_SITEURL=${WP_HOME}\n'
@@ -160,9 +151,7 @@ def main():
     recipe.write_text('<?php\nnamespace Deployer;\nrequire ' + json.dumps(str(source / 'deploy.php')) + ';\n'
         + "set('bin/php', '/usr/bin/php');\n"
         + "task('deploy:fpm-check', static function (): void { run('test -S {{php_fpm_socket}} && test -w {{php_fpm_socket}}'); run('getent group {{log_group}} >/dev/null'); run('command -v setfacl'); });\n"
-        + "task('deploy:fpm-reload', static function (): void { run('kill -USR2 $(cat " + str(base / 'fpm.pid') + ")'); });\n"
-        + "task('deploy:published-health', static function (): void {\n"
-        + " run('cd {{current_path}} && {{bin/php}} wp-cli.phar eval-file " + str(verifier) + "');\n});\n")
+        + "task('deploy:fpm-reload', static function (): void { run('kill -USR2 $(cat " + str(base / 'fpm.pid') + ")'); });\n")
     recipe.chmod(0o644)
     processes = []
     try:
@@ -193,7 +182,10 @@ def main():
             assert (current / 'public/wp/wp-load.php').is_file()
             assert (current / 'var/cache').stat().st_mode & 0o777 == 0o750
             assert not (deploy_path / '.dep/deploy.lock').exists()
-        assert '?rest_route=' in (base / 'https-access.log').read_text()
+            run(['curl', '--fail', '--silent', '--show-error', '--cacert', str(certificate), f'https://127.0.0.1:{https_port}/'])
+            absent = user_run(['php', 'wp-cli.phar', 'eval', '$response = rest_do_request(new WP_REST_Request("GET", "/sympress/v1/health")); echo $response->get_status();'], cwd=current)
+            assert absent.strip() == '404', absent
+        assert 'GET / ' in (base / 'https-access.log').read_text()
         user_run(['php', str(source / 'deployment/vendor/bin/dep'), '-f', str(recipe), 'rollback', 'production', '-n', '--no-ansi'], cwd=source)
         assert (deploy_path / 'current').resolve(strict=True) == previous
         assert not (deploy_path / '.dep/deploy.lock').exists()
@@ -213,7 +205,7 @@ def main():
         assert failed.returncode != 0, failed.stdout + failed.stderr
         assert (deploy_path / 'current').resolve(strict=True) == current, failed.stdout + failed.stderr
         assert not (deploy_path / '.dep/deploy.lock').exists()
-        print(json.dumps({'deploys': 2, 'permalinks': ['plain', 'pretty'], 'published_verifier': 'verified HTTPS',
+        print(json.dumps({'deploys': 2, 'permalinks': ['plain', 'pretty'], 'published_verifier': 'private FPM build ID', 'public_https': 'verified', 'private_package_required': False,
                           'manual_rollback': 'pass', 'failed_health_rollback': 'pass', 'doctor_identity': 'www-data',
                           'cache_mode': '0750', 'ssh_agent_forwarding': False, 'fpm_health': 'ok'}))
     except Exception:

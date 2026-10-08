@@ -90,6 +90,8 @@ def restore(settings, archive, identity, confirm, *, staging=False, scrub_script
         raise ValueError('Confirmation must equal the installed target home URL.')
     if staging and (environment != 'staging' or not scrub_script):
         raise ValueError('Sync requires a staging target and an explicit private scrub PHP script.')
+    if staging and wp(settings, 'eval', 'echo apply_filters("pre_wp_mail", null, []) === false ? "blocked" : "enabled";').strip() != b'blocked':
+        raise ValueError('Sync requires an active staging mail guard before importing; activate the private Security MU loader or a project-owned guard.')
     if environment == 'production' and not settings.get('allow_production_restore', False):
         raise ValueError('Production restore requires allow_production_restore in private operation config.')
     with tempfile.TemporaryDirectory(prefix='sympress-restore-') as tmp:

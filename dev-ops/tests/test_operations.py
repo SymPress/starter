@@ -70,6 +70,13 @@ class OperationsTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, 'Production restore'):
                 ops.restore({}, '/missing', '/missing', 'https://target.test')
 
+    def test_staging_sync_rejects_missing_mail_guard_before_decryption_or_mutation(self):
+        with patch.object(ops, 'wp', side_effect=[b'https://target.test', b'staging', b'enabled']) as wp, patch.object(ops, 'command') as command:
+            with self.assertRaisesRegex(ValueError, 'active staging mail guard'):
+                ops.restore({}, '/missing', '/missing', 'https://target.test', staging=True, scrub_script='/private/scrub.php')
+            self.assertEqual(wp.call_count, 3)
+            command.assert_not_called()
+
     def test_untrusted_archive_link_rejected_before_import(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp = Path(tmp)
