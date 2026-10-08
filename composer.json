@@ -6,6 +6,7 @@
     "require": {
         "php": "^8.5",
         "sympress/kernel": "^1.1.5",
+        "sympress/starter-site-policy": "^1.0",
         "sympress/monolog-bundle": "^1.1.4",
         "sympress/wp-cli-console": "^1.0.4",
         "roots/wordpress": "^7.1.1",
@@ -90,6 +91,16 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "repositories": [
+        {
+            "type": "path",
+            "url": "./packages/*",
+            "options": {
+                "symlink": true,
+                "versions": {
+                    "sympress/starter-site-policy": "1.0.0"
+                }
+            }
+        },
         {
             "type": "composer",
             "url": "https://wpackagist.org"

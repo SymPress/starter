@@ -110,6 +110,18 @@ class DeployTest(unittest.TestCase):
         self.assertEqual(recipe['hooks']['after']['deploy:lock'], ['deploy:mark-locked'])
         self.assertEqual(recipe['refresh'], ['deploy:fpm-reload', 'deploy:opcache-reset', 'deploy:published-health'])
 
+    def test_effective_fpm_doctor_runs_after_release_file_permissions(self):
+        runtime = self.probe('deploy:runtime')
+        self.assertEqual(runtime.returncode, 0, runtime.stderr)
+        self.assertFalse(any('doctor --production' in command
+                             for command in json.loads(runtime.stdout)['commands']))
+        permissions = self.probe('deploy:permissions', PROBE_DOCTOR_JSON=self.doctor_report())
+        self.assertEqual(permissions.returncode, 0, permissions.stderr)
+        commands = json.loads(permissions.stdout)['commands']
+        readable = next(i for i, command in enumerate(commands) if 'chmod 0640' in command)
+        doctor = next(i for i, command in enumerate(commands) if 'doctor --production' in command)
+        self.assertLess(readable, doctor)
+
     def test_reload_uses_noninteractive_sudo_and_checks_service(self):
         result = self.probe('deploy:fpm-reload', SYMPRESS_FPM_SERVICE='php8.5-fpm-custom')
         self.assertEqual(result.returncode, 0, result.stderr)

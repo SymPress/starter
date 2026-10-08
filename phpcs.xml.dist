@@ -36,6 +36,7 @@
     </rule>
 
     <file>./dev-ops/orchestrate.php</file>
+    <file>./packages/site-policy</file>
 
     <!-- Runtime injects this variable when including the command provider. -->
     <rule ref="VariableAnalysis.CodeAnalysis.VariableAnalysis">

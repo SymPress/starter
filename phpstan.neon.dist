@@ -5,6 +5,7 @@ parameters:
     level: 6
     paths:
         - dev-ops/orchestrate.php
+        - packages/site-policy
     
     excludePaths:
         - */vendor/*
