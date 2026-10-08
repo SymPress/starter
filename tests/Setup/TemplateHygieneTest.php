@@ -9,6 +9,18 @@ use Symfony\Component\Process\Process;
 
 final class TemplateHygieneTest extends TestCase
 {
+    public function testRuntimeOwnsKernelBootWithoutPrivateMuPackages(): void
+    {
+        $config = json_decode((string) file_get_contents($this->projectDir . '/dev-ops/runtime.json'), true, flags: JSON_THROW_ON_ERROR);
+        self::assertTrue($config['kernel-boot']);
+        self::assertTrue($config['wp-config-autoload']);
+        self::assertDirectoryDoesNotExist($this->projectDir . '/packages/base-mu-plugins');
+        $lock = json_decode((string) file_get_contents($this->projectDir . '/composer.lock'), true, flags: JSON_THROW_ON_ERROR);
+        $names = array_column($lock['packages'], 'name');
+        self::assertNotContains('sympress/base-mu-plugin', $names);
+        self::assertNotContains('sympress/base-mu-plugins', $names);
+    }
+
     public function testRootRequiresReleasedRuntimeWithProductionHardening(): void
     {
         $composer = json_decode((string) file_get_contents($this->projectDir . '/composer.json'), true, flags: JSON_THROW_ON_ERROR);

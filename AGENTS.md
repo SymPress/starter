@@ -15,8 +15,8 @@ features belong in generated projects or reusable packages, not in this template
 - `.sympress/cli.json` — the CLI template/profile/package contract.
 
 `public/`, `vendor/`, runtime caches and local `.env` files are generated. Do not
-commit them. Base runtime behavior belongs in `packages/base-mu-plugins/`; website
-configuration belongs in `config/`.
+commit them. SymPress Runtime generates the kernel bootstrap with `kernel-boot: true`;
+website configuration belongs in `config/`.
 
 ## Verification
 

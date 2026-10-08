@@ -35,7 +35,14 @@
         </properties>
     </rule>
 
-    <file>./packages</file>
+    <file>./dev-ops/orchestrate.php</file>
+
+    <!-- Runtime injects this variable when including the command provider. -->
+    <rule ref="VariableAnalysis.CodeAnalysis.VariableAnalysis">
+        <properties>
+            <property name="validUndefinedVariableNames" value="services" />
+        </properties>
+    </rule>
 
     <exclude-pattern>*/assets/*</exclude-pattern>
     <exclude-pattern>*/vendor/*</exclude-pattern>

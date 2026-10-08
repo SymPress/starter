@@ -8,8 +8,5 @@
         <testsuite name="setup">
             <directory>tests/Setup</directory>
         </testsuite>
-        <testsuite name="base-mu-plugins">
-            <directory>tests/BaseMuPlugins</directory>
-        </testsuite>
     </testsuites>
 </phpunit>

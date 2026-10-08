@@ -2,6 +2,9 @@
 
 declare(strict_types=1);
 
+namespace SymPress\Starter\Runtime;
+
+use LogicException;
 use SymPress\Runtime\Database\DbChecker;
 use SymPress\Runtime\Services;
 
@@ -9,9 +12,13 @@ $config = (object) [
     'title' => 'SymPress Starter',
 ];
 
-$shellArg = static fn (string $value): string => \escapeshellarg($value);
+$shellArg = static fn (string $value): string => escapeshellarg($value);
 
-/** @var Services $services */
+// Runtime injects its services when loading the command provider.
+if (!isset($services) || !$services instanceof Services) {
+    throw new LogicException('The command provider requires SymPress Runtime services.');
+}
+
 $env = $services->env();
 
 // If env configuration is invalid nothing to do.
@@ -36,21 +43,22 @@ $user = $env->read('WP_ADMIN_USERNAME') ?: 'admin';
 $pass = $env->read('WP_ADMIN_PASSWORD');
 
 if (!$pass || $pass === 'admin') {
-    $pass = \bin2hex(\random_bytes(24));
+    $pass = bin2hex(random_bytes(24));
 }
 $home = $env->read('WP_HOME');
 $siteUrl = $env->read('WP_SITEURL') ?: $home;
 $email = $env->read('WP_ADMIN_EMAIL') ?: 'admin@example.invalid';
 
-$install = "wp core install";
-$install .= " --skip-packages --skip-email";
+$install = 'wp core install';
+$install .= ' --skip-packages --skip-email';
 $install .= " --title={$shellArg($config->title)} --url={$shellArg((string) $home)}";
-$install .= " --admin_user={$shellArg((string) $user)} --admin_password={$shellArg((string) $pass)} --admin_email={$shellArg($email)}";
+$install .= " --admin_user={$shellArg((string) $user)} --admin_password={$shellArg((string) $pass)}";
+$install .= " --admin_email={$shellArg((string) $email)}";
 
 // Add install command plus commands to update siteurl option and setup language.
 $commands[] = $install;
 $commands[] = 'wp option update siteurl ' . $shellArg((string) $siteUrl);
-$commands[] = "wp rewrite flush";
-$commands[] = "wp theme activate twentytwentyfive";
+$commands[] = 'wp rewrite flush';
+$commands[] = 'wp theme activate twentytwentyfive';
 
 return $commands;

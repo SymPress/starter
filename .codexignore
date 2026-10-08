@@ -40,8 +40,6 @@ public/wp-content/themes/*
 
 # Generated package assets
 packages/*/assets/
-!packages/base-mu-plugins/assets/
-!packages/base-mu-plugins/assets/**
 
 # DDEV artifacts
 .ddev/db_snapshots/
