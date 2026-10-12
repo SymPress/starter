@@ -3446,16 +3446,16 @@
         },
         {
             "name": "symfony/polyfill-deepclone",
-            "version": "v1.43.0",
+            "version": "v1.43.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-deepclone.git",
-                "reference": "8db92c5508a3f7f82d8688d32f0a4868a26e58ad"
+                "reference": "aaba44b6ee7299ae65717811c55b57ab9bc0fedd"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-deepclone/zipball/8db92c5508a3f7f82d8688d32f0a4868a26e58ad",
-                "reference": "8db92c5508a3f7f82d8688d32f0a4868a26e58ad",
+                "url": "https://api.github.com/repos/symfony/polyfill-deepclone/zipball/aaba44b6ee7299ae65717811c55b57ab9bc0fedd",
+                "reference": "aaba44b6ee7299ae65717811c55b57ab9bc0fedd",
                 "shasum": ""
             },
             "require": {
@@ -3509,7 +3509,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-deepclone/tree/v1.43.0"
+                "source": "https://github.com/symfony/polyfill-deepclone/tree/v1.43.1"
             },
             "funding": [
                 {
@@ -3529,7 +3529,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-30T09:07:27+00:00"
+            "time": "2026-10-06T19:46:18+00:00"
         },
         {
             "name": "symfony/polyfill-intl-grapheme",
@@ -4757,16 +4757,16 @@
         },
         {
             "name": "sympress/kernel",
-            "version": "v1.1.5",
+            "version": "v1.1.7",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/kernel.git",
-                "reference": "33779b9da1d648b882c3d3a47436ed64c08d0e89"
+                "reference": "910e5bbb4b30684c0cd5a8512ae0f6c47f1282e6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/kernel/zipball/33779b9da1d648b882c3d3a47436ed64c08d0e89",
-                "reference": "33779b9da1d648b882c3d3a47436ed64c08d0e89",
+                "url": "https://api.github.com/repos/SymPress/kernel/zipball/910e5bbb4b30684c0cd5a8512ae0f6c47f1282e6",
+                "reference": "910e5bbb4b30684c0cd5a8512ae0f6c47f1282e6",
                 "shasum": ""
             },
             "require": {
@@ -4817,9 +4817,9 @@
             "description": "WordPress kernel and shared service container built on Symfony DependencyInjection.",
             "support": {
                 "issues": "https://github.com/SymPress/kernel/issues",
-                "source": "https://github.com/SymPress/kernel/tree/v1.1.5"
+                "source": "https://github.com/SymPress/kernel/tree/v1.1.7"
             },
-            "time": "2026-10-05T10:44:15+00:00"
+            "time": "2026-10-06T17:09:25+00:00"
         },
         {
             "name": "sympress/monolog-bundle",
