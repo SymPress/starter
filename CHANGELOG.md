@@ -4,6 +4,11 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.2.1 — 2026-10-16
+
+- Require Kernel 1.1.10 and refresh the locked Symfony ExpressionLanguage, YAML and HttpFoundation dependencies to 8.1.9. This excludes the incomplete ExpressionLanguage nesting fix, preserves the YAML nesting limit and includes the HttpFoundation whitespace-separator correction.
+- Advertise Starter 1.2.1 to the CLI and advance the fixed update-canary source baseline.
+
 ## 1.2.0 — 2026-10-08
 
 - Remove the local Base MU and site-policy packages. Shared website policies now belong to the separately installed private Natterer-Schaeffner Security bundle; the public Starter has no private dependency.
