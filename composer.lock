@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5c04bce116b9b02c1f41da810d4c7a5b",
+    "content-hash": "4b880d51054902b9f99c59bef5eb3153",
     "packages": [
         {
             "name": "composer/ca-bundle",
-            "version": "1.5.14",
+            "version": "1.6.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/ca-bundle.git",
-                "reference": "0c8abba0634f637bd78c4e451981da368d403463"
+                "reference": "0c64479fae6952ba4cf021a72c0ac530394c91d4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/ca-bundle/zipball/0c8abba0634f637bd78c4e451981da368d403463",
-                "reference": "0c8abba0634f637bd78c4e451981da368d403463",
+                "url": "https://api.github.com/repos/composer/ca-bundle/zipball/0c64479fae6952ba4cf021a72c0ac530394c91d4",
+                "reference": "0c64479fae6952ba4cf021a72c0ac530394c91d4",
                 "shasum": ""
             },
             "require": {
@@ -64,7 +64,7 @@
             "support": {
                 "irc": "irc://irc.freenode.org/composer",
                 "issues": "https://github.com/composer/ca-bundle/issues",
-                "source": "https://github.com/composer/ca-bundle/tree/1.5.14"
+                "source": "https://github.com/composer/ca-bundle/tree/1.6.1"
             },
             "funding": [
                 {
@@ -76,7 +76,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-08-21T14:57:29+00:00"
+            "time": "2026-10-29T14:10:42+00:00"
         },
         {
             "name": "composer/class-map-generator",
@@ -551,16 +551,16 @@
         },
         {
             "name": "composer/semver",
-            "version": "3.5.0",
+            "version": "3.6.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/composer/semver.git",
-                "reference": "f7a296f4c4cf8cb8bb83e35d6951a406bb11afa5"
+                "reference": "d92543b7ede9c4ec6b59853cefb061e39866d2cf"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/composer/semver/zipball/f7a296f4c4cf8cb8bb83e35d6951a406bb11afa5",
-                "reference": "f7a296f4c4cf8cb8bb83e35d6951a406bb11afa5",
+                "url": "https://api.github.com/repos/composer/semver/zipball/d92543b7ede9c4ec6b59853cefb061e39866d2cf",
+                "reference": "d92543b7ede9c4ec6b59853cefb061e39866d2cf",
                 "shasum": ""
             },
             "require": {
@@ -612,7 +612,7 @@
             "support": {
                 "irc": "ircs://irc.libera.chat:6697/composer",
                 "issues": "https://github.com/composer/semver/issues",
-                "source": "https://github.com/composer/semver/tree/3.5.0"
+                "source": "https://github.com/composer/semver/tree/3.6.0"
             },
             "funding": [
                 {
@@ -624,7 +624,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-09-24T14:38:51+00:00"
+            "time": "2026-10-29T09:13:34+00:00"
         },
         {
             "name": "composer/spdx-licenses",
@@ -770,16 +770,16 @@
         },
         {
             "name": "justinrainbow/json-schema",
-            "version": "6.13.1",
+            "version": "6.14.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jsonrainbow/json-schema.git",
-                "reference": "e54aacc4c0657b3a4af4f628428d2702146828c6"
+                "reference": "bae415e135dd68260c2d020ba392850231e9b1ab"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jsonrainbow/json-schema/zipball/e54aacc4c0657b3a4af4f628428d2702146828c6",
-                "reference": "e54aacc4c0657b3a4af4f628428d2702146828c6",
+                "url": "https://api.github.com/repos/jsonrainbow/json-schema/zipball/bae415e135dd68260c2d020ba392850231e9b1ab",
+                "reference": "bae415e135dd68260c2d020ba392850231e9b1ab",
                 "shasum": ""
             },
             "require": {
@@ -829,9 +829,9 @@
             ],
             "support": {
                 "issues": "https://github.com/jsonrainbow/json-schema/issues",
-                "source": "https://github.com/jsonrainbow/json-schema/tree/6.13.1"
+                "source": "https://github.com/jsonrainbow/json-schema/tree/6.14.0"
             },
-            "time": "2026-09-30T07:42:28+00:00"
+            "time": "2026-10-24T08:53:34+00:00"
         },
         {
             "name": "marc-mabe/php-enum",
@@ -2925,16 +2925,16 @@
         },
         {
             "name": "symfony/finder",
-            "version": "v8.1.8",
+            "version": "v8.1.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/finder.git",
-                "reference": "bd4fed193a3132c91c5c93595cbfc78988915822"
+                "reference": "2f4c0f26106520d82e1b71759d2fb8d32d8b7a43"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/finder/zipball/bd4fed193a3132c91c5c93595cbfc78988915822",
-                "reference": "bd4fed193a3132c91c5c93595cbfc78988915822",
+                "url": "https://api.github.com/repos/symfony/finder/zipball/2f4c0f26106520d82e1b71759d2fb8d32d8b7a43",
+                "reference": "2f4c0f26106520d82e1b71759d2fb8d32d8b7a43",
                 "shasum": ""
             },
             "require": {
@@ -2969,7 +2969,7 @@
             "description": "Finds files and directories via an intuitive fluent interface",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/finder/tree/v8.1.8"
+                "source": "https://github.com/symfony/finder/tree/v8.1.10"
             },
             "funding": [
                 {
@@ -2989,20 +2989,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-26T06:33:49+00:00"
+            "time": "2026-10-19T17:00:07+00:00"
         },
         {
             "name": "symfony/http-client",
-            "version": "v8.1.8",
+            "version": "v8.1.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/http-client.git",
-                "reference": "e20aca4ceaa888197de5c792ffc551d99e43d98a"
+                "reference": "1f6bd9bb0dddbbb1b88823e26c6d05fc3ba89219"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/http-client/zipball/e20aca4ceaa888197de5c792ffc551d99e43d98a",
-                "reference": "e20aca4ceaa888197de5c792ffc551d99e43d98a",
+                "url": "https://api.github.com/repos/symfony/http-client/zipball/1f6bd9bb0dddbbb1b88823e26c6d05fc3ba89219",
+                "reference": "1f6bd9bb0dddbbb1b88823e26c6d05fc3ba89219",
                 "shasum": ""
             },
             "require": {
@@ -3066,7 +3066,7 @@
                 "http"
             ],
             "support": {
-                "source": "https://github.com/symfony/http-client/tree/v8.1.8"
+                "source": "https://github.com/symfony/http-client/tree/v8.1.10"
             },
             "funding": [
                 {
@@ -3086,7 +3086,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-24T11:09:32+00:00"
+            "time": "2026-10-26T21:55:04+00:00"
         },
         {
             "name": "symfony/http-client-contracts",
@@ -4189,16 +4189,16 @@
         },
         {
             "name": "symfony/process",
-            "version": "v8.1.7",
+            "version": "v8.1.10",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/process.git",
-                "reference": "10823b09358e690df4ff943e24e8492bb1019fc3"
+                "reference": "08aa69fa0998bb65a089f9e148a2c0f8b391398e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/process/zipball/10823b09358e690df4ff943e24e8492bb1019fc3",
-                "reference": "10823b09358e690df4ff943e24e8492bb1019fc3",
+                "url": "https://api.github.com/repos/symfony/process/zipball/08aa69fa0998bb65a089f9e148a2c0f8b391398e",
+                "reference": "08aa69fa0998bb65a089f9e148a2c0f8b391398e",
                 "shasum": ""
             },
             "require": {
@@ -4230,7 +4230,7 @@
             "description": "Executes commands in sub-processes",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/process/tree/v8.1.7"
+                "source": "https://github.com/symfony/process/tree/v8.1.10"
             },
             "funding": [
                 {
@@ -4250,7 +4250,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-09-02T12:40:29+00:00"
+            "time": "2026-10-25T14:40:25+00:00"
         },
         {
             "name": "symfony/routing",
@@ -4880,16 +4880,16 @@
         },
         {
             "name": "sympress/runtime",
-            "version": "v1.2.4",
+            "version": "v1.2.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/runtime.git",
-                "reference": "7d0658af2af55c6b34c7b271092738baa4f50068"
+                "reference": "4f5eea530f7d16d7c680e45eede9c7eb7cb93605"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/runtime/zipball/7d0658af2af55c6b34c7b271092738baa4f50068",
-                "reference": "7d0658af2af55c6b34c7b271092738baa4f50068",
+                "url": "https://api.github.com/repos/SymPress/runtime/zipball/4f5eea530f7d16d7c680e45eede9c7eb7cb93605",
+                "reference": "4f5eea530f7d16d7c680e45eede9c7eb7cb93605",
                 "shasum": ""
             },
             "require": {
@@ -4899,7 +4899,7 @@
                 "opis/json-schema": "^2.6",
                 "php": "^8.5",
                 "symfony/console": "^8.1",
-                "symfony/dependency-injection": "^8.1",
+                "symfony/dependency-injection": "^8.1.8",
                 "symfony/dotenv": "^8.1",
                 "symfony/event-dispatcher": "^8.1",
                 "symfony/filesystem": "^8.1",
@@ -4955,7 +4955,7 @@
                 "issues": "https://github.com/SymPress/runtime/issues",
                 "source": "https://github.com/SymPress/runtime"
             },
-            "time": "2026-10-06T11:56:08+00:00"
+            "time": "2026-10-23T23:01:46+00:00"
         },
         {
             "name": "sympress/wp-cli-console",
