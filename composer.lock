@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5c04bce116b9b02c1f41da810d4c7a5b",
+    "content-hash": "4b880d51054902b9f99c59bef5eb3153",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -7768,16 +7768,16 @@
         },
         {
             "name": "sympress/profiler",
-            "version": "v1.0.4",
+            "version": "v1.0.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/SymPress/profiler.git",
-                "reference": "e34627273e3443dd30eaea05720da6b82968d717"
+                "reference": "c864287c9e498cbd0f0a595afa85e69992603994"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/SymPress/profiler/zipball/e34627273e3443dd30eaea05720da6b82968d717",
-                "reference": "e34627273e3443dd30eaea05720da6b82968d717",
+                "url": "https://api.github.com/repos/SymPress/profiler/zipball/c864287c9e498cbd0f0a595afa85e69992603994",
+                "reference": "c864287c9e498cbd0f0a595afa85e69992603994",
                 "shasum": ""
             },
             "require": {
@@ -7812,16 +7812,16 @@
             "authors": [
                 {
                     "name": "Brian Schäffner",
-                    "email": "brian.schaeffner@sympress.de",
+                    "email": "brian.schaeffner@sympress.io",
                     "role": "Developer"
                 }
             ],
             "description": "Profiler and web debug toolbar for the WordPress kernel.",
             "support": {
                 "issues": "https://github.com/SymPress/profiler/issues",
-                "source": "https://github.com/SymPress/profiler/tree/v1.0.4"
+                "source": "https://github.com/SymPress/profiler/tree/v1.0.6"
             },
-            "time": "2026-10-03T16:11:43+00:00"
+            "time": "2026-10-22T20:48:52+00:00"
         },
         {
             "name": "szepeviktor/phpstan-wordpress",
