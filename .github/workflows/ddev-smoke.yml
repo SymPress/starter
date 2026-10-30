@@ -40,8 +40,8 @@ jobs:
       playwright_run_command: |
         set -euo pipefail
         ddev composer qa
-        ddev exec wp core is-installed
-        ddev exec wp db check
+        ddev exec php wp-cli.phar core is-installed
+        ddev exec php wp-cli.phar db check
         primary_url="$(ddev describe -j | jq -r '.raw.primary_url // empty')"
         test -n "$primary_url"
         curl -k -I --fail --max-time 20 "$primary_url"
