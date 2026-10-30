@@ -26,7 +26,17 @@ The recipe accepts stages `production` and `staging` and reads `DEPLOY_HOSTNAME`
 Set `SYMPRESS_FPM_SERVICE` to the remote systemd service (default `php8.5-fpm`).
 The deploy identity needs a narrow passwordless sudo rule for
 `/usr/bin/systemctl reload php8.5-fpm` using the selected service. The recipe
-checks the active service and sudo permission before deploy or rollback.
+checks the active service and sudo permission before deploy or rollback. Doctor also needs permission to execute
+as the configured PHP identity after the release permissions are applied. With
+the default paths and identity, add this exact command to the host's narrow
+passwordless sudo policy (replace the deploy user and base path as needed):
+
+```sudoers
+deploy ALL=(www-data) NOPASSWD: /usr/bin/php /srv/sympress/releases/*/vendor/bin/runtime doctor --production --database-health --php-user=www-data --json --no-interaction
+```
+
+This checks actual filesystem access, including ACLs, under the PHP identity;
+passing only `--php-user` from the deployment identity cannot establish it.
 Install `acl` for `setfacl`, and `libfcgi-bin` for `/usr/bin/cgi-fcgi`; give the deploy identity access to the
 private pool socket. `SYMPRESS_FPM_SOCKET` defaults to `/run/php/php8.5-fpm.sock`.
 The nginx template uses the same socket; update its `fastcgi_pass` as well when

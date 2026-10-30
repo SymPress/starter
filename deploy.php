@@ -203,7 +203,7 @@ task('deploy:runtime', static function (): void {
     run('cd {{release_path}} && {{bin/php}} vendor/bin/runtime --no-interaction');
     run('cd {{release_path}} && {{bin/php}} bin/console lint:container --no-interaction');
     run('cd {{release_path}} && {{bin/php}} vendor/bin/runtime dump-env ' . escapeshellarg(get('stage')) . ' --no-interaction');
-    run('cd {{release_path}} && {{bin/php}} vendor/bin/runtime doctor --production --database-health --no-interaction');
+    // Doctor runs after permission provisioning under the actual PHP identity.
 });
 
 task('deploy:permissions', static function (): void {
@@ -224,7 +224,7 @@ task('deploy:permissions', static function (): void {
     }
     // Release-specific warmed kernel cache is read-only to FPM under build-ID policy.
     // Exit 1 (fail) aborts here; exit 2 (unknown) is evaluated check by check below.
-    assertPhpUserDoctor(run('cd {{release_path}} && ({{bin/php}} vendor/bin/runtime doctor --production --database-health '
+    assertPhpUserDoctor(run('cd {{release_path}} && (sudo -n -u {{php_user}} {{bin/php}} {{release_path}}/vendor/bin/runtime doctor --production --database-health '
         . '--php-user={{php_user}} --json --no-interaction || test $? -eq 2)'));
 });
 
