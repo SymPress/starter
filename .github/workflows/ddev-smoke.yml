@@ -21,7 +21,7 @@ jobs:
   ddev-smoke:
     uses: sympress/workflows/.github/workflows/ddev-playwright.yml@9ab936c5ff11667908252eb1b788fffe00ef5ed8
     with:
-      checkout_ref: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update_dependencies)) && 'v1.2.1' || '' }}
+      checkout_ref: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update_dependencies)) && 'v1.2.2' || '' }}
       php_version: '8.5'
       composer_update: ${{ github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update_dependencies) }}
       allow_custom_commands: true

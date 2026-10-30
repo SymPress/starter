@@ -4,6 +4,13 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.2.2 — 2026-10-30
+
+- Patch the locked WordPress and PHPUnit security updates and refresh PHPStan.
+- Refresh the locked SymPress packages and immutable CI dependencies.
+- Use the project WP-CLI for DDEV smoke checks and preserve command failure propagation.
+- Advertise Starter 1.2.2 to the CLI and advance the fixed update-canary source baseline.
+
 ## 1.2.1 — 2026-10-16
 
 - Require Kernel 1.1.10 and refresh the locked Symfony ExpressionLanguage, YAML and HttpFoundation dependencies to 8.1.9. This excludes the incomplete ExpressionLanguage nesting fix, preserves the YAML nesting limit and includes the HttpFoundation whitespace-separator correction.
