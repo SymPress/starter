@@ -222,10 +222,12 @@ class DeployTest(unittest.TestCase):
             ('production.readable.0', 'unknown'), ('production.readable.1', 'unknown')))
         self.assertEqual(accepted.returncode, 0, accepted.stderr)
         command = json.loads(accepted.stdout)['commands'][-1]
+        self.assertIn('sudo -n -u {{php_user}} {{bin/php}}', command)
         self.assertIn('--php-user={{php_user}} --json', command)
         self.assertIn('|| test $? -eq 2', command)
         for check_id, status in (('kernel.cache', 'unknown'), ('production.readable.0', 'fail'),
-                                 ('production.app-secret', 'fail')):
+                                 ('production.app-secret', 'fail'), ('production.env-dir-readonly', 'fail'),
+                                 ('production.env-dir-readonly', 'unknown')):
             with self.subTest(check=check_id, status=status):
                 rejected = self.probe('deploy:permissions', PROBE_DOCTOR_JSON=self.doctor_report((check_id, status)))
                 self.assertEqual(rejected.returncode, 17)

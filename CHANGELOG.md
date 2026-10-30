@@ -9,6 +9,7 @@ The project follows semantic versioning once the first stable release is tagged.
 - Patch the locked WordPress and PHPUnit security updates and refresh PHPStan.
 - Refresh the locked SymPress packages and immutable CI dependencies.
 - Use the project WP-CLI for DDEV smoke checks and preserve command failure propagation.
+- Run production Doctor under the PHP identity after permission provisioning; configure the documented narrow sudo command.
 - Advertise Starter 1.2.2 to the CLI and advance the fixed update-canary source baseline.
 
 ## 1.2.1 — 2026-10-16

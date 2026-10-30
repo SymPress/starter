@@ -123,7 +123,7 @@ def main():
     run(['chown', '-R', 'sympress-probe:sympress-probe', str(payload), str(deploy_path)])
     sudoers = Path('/etc/sudoers.d/sympress-go-probe')
     sudoers.write_text('sympress-probe ALL=(www-data) NOPASSWD: /usr/bin/php ' + str(deploy_path)
-                       + '/releases/*/vendor/bin/runtime doctor --production --database-health --php-user=www-data --no-interaction\n')
+                       + '/releases/*/vendor/bin/runtime doctor --production --database-health --php-user=www-data --json --no-interaction\n')
     sudoers.chmod(0o440)
     environment = os.environ | {'HOME': str(home), 'DEPLOY_HOSTNAME': '127.0.0.1',
                                 'DEPLOY_PORT': str(ssh_port), 'DEPLOY_USER': 'sympress-probe',
