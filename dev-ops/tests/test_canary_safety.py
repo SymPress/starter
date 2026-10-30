@@ -182,7 +182,7 @@ class CanarySafetyTest(unittest.TestCase):
     def test_nested_runtime_and_wordpress_checks_propagate_failures(self):
         failures = ["composer qa"]
         if (ROOT / ".github/workflows/ddev-smoke.yml").exists():
-            failures += ["exec wp core is-installed", "exec wp db check"]
+            failures += ["exec php wp-cli.phar core is-installed", "exec php wp-cli.phar db check"]
         for failure in failures:
             with self.subTest(failure=failure):
                 result, calls = self.nested_workflow_command(
