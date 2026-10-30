@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5c04bce116b9b02c1f41da810d4c7a5b",
+    "content-hash": "4b880d51054902b9f99c59bef5eb3153",
     "packages": [
         {
             "name": "composer/ca-bundle",
@@ -5801,11 +5801,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.2.16",
+            "version": "2.3.3",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/46a6d9060e5a7763adfcc21ebcb8b504ebdbcb92",
-                "reference": "46a6d9060e5a7763adfcc21ebcb8b504ebdbcb92",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/4b57dc8ca7456b635d1661845f44bc060b02c6b0",
+                "reference": "4b57dc8ca7456b635d1661845f44bc060b02c6b0",
                 "shasum": ""
             },
             "require": {
@@ -5861,8 +5861,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-09-25T09:31:51+00:00",
-            "published-time": "2026-09-25T09:32:03+00:00"
+            "time": "2026-10-27T14:06:26+00:00"
         },
         {
             "name": "phpunit/php-code-coverage",
@@ -8016,5 +8015,5 @@
     "platform-overrides": {
         "php": "8.5"
     },
-    "plugin-api-version": "2.11.0"
+    "plugin-api-version": "2.9.0"
 }
