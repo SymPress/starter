@@ -1,7 +1,7 @@
 {
   "name": "sympress-starter-deployment-build",
   "private": true,
-  "version": "1.2.2",
+  "version": "1.2.3",
   "scripts": {
     "build": "php dev-ops/build.php"
   },
