@@ -4,6 +4,10 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.2.4 — 2026-11-13
+
+- Refresh the locked Runtime, Kernel, Profiler, PHPStan and PHPUnit dependencies.
+
 ## 1.2.3 — 2026-11-06
 
 - Use the Symfony 8.1.11 security patches released on November 4.
