@@ -81,7 +81,6 @@
                 "block": true,
                 "audit": "fail",
                 "ignore-id": {
-                    "CVE-2022-3590": "Wordfence marks every WordPress version affected and no patched release exists; keep outbound HTTP restricted and review this waiver regularly.",
                     "CVE-2017-14990": "Wordfence marks every WordPress version affected and no patched release exists; production multisite signup is disabled."
                 }
             }
