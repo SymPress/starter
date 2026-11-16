@@ -122,8 +122,9 @@ def main():
         path.chmod(0o600)
     run(['chown', '-R', 'sympress-probe:sympress-probe', str(payload), str(deploy_path)])
     sudoers = Path('/etc/sudoers.d/sympress-go-probe')
-    sudoers.write_text('sympress-probe ALL=(www-data) NOPASSWD: /usr/bin/php ' + str(deploy_path)
-                       + '/releases/*/vendor/bin/runtime doctor --production --database-health --php-user=www-data --json --no-interaction\n')
+    sudoers.write_text('sympress-probe ALL=(www-data) NOPASSWD: /usr/bin/php ^' + str(deploy_path)
+                       + '/releases/[A-Za-z0-9][A-Za-z0-9._-]*/vendor/bin/runtime'
+                       + ' doctor --production --database-health --php-user=www-data --json --no-interaction$\n')
     sudoers.chmod(0o440)
     environment = os.environ | {'HOME': str(home), 'DEPLOY_HOSTNAME': '127.0.0.1',
                                 'DEPLOY_PORT': str(ssh_port), 'DEPLOY_USER': 'sympress-probe',
@@ -167,6 +168,12 @@ def main():
         with sudoers.open('a') as stream:
             stream.write('sympress-probe ALL=(root) NOPASSWD: /bin/kill -USR2 *\n')
         recipe.write_text(recipe.read_text().replace("run('kill -USR2", "run('sudo -n /bin/kill -USR2"))
+        disallowed = subprocess.run([
+            'sudo', '-u', 'sympress-probe', 'sudo', '-n', '-l', '-u', 'www-data', '/usr/bin/php',
+            str(deploy_path / 'releases/1/extra/vendor/bin/runtime'), 'doctor', '--production',
+            '--database-health', '--php-user=www-data', '--json', '--no-interaction',
+        ], capture_output=True, text=True, timeout=10)
+        assert disallowed.returncode == 1, disallowed.stdout + disallowed.stderr
         user_run(['php', 'wp-cli.phar', 'option', 'update', 'permalink_structure', ''])
         user_run(['php', 'wp-cli.phar', 'eval',
                   "if (get_option('permalink_structure') !== '') { WP_CLI::error('Expected plain permalinks.'); }"])
