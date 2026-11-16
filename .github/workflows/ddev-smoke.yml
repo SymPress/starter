@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   ddev-smoke:
-    uses: sympress/workflows/.github/workflows/ddev-playwright.yml@9ab936c5ff11667908252eb1b788fffe00ef5ed8
+    uses: sympress/workflows/.github/workflows/ddev-playwright.yml@2ebe47e2bc6d402c172015b64c0f5a9f2bf0c322 # v1.3.2
     with:
       checkout_ref: ${{ (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.update_dependencies)) && 'v1.2.4' || '' }}
       php_version: '8.5'
