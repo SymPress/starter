@@ -29,10 +29,11 @@ The deploy identity needs a narrow passwordless sudo rule for
 checks the active service and sudo permission before deploy or rollback. Doctor also needs permission to execute
 as the configured PHP identity after the release permissions are applied. With
 the default paths and identity, add this exact command to the host's narrow
-passwordless sudo policy (replace the deploy user and base path as needed):
+passwordless sudo policy (replace the deploy user and base path as needed).
+This example uses sudo 1.9.10 or newer and matches one release directory name:
 
 ```sudoers
-deploy ALL=(www-data) NOPASSWD: /usr/bin/php /srv/sympress/releases/*/vendor/bin/runtime doctor --production --database-health --php-user=www-data --json --no-interaction
+deploy ALL=(www-data) NOPASSWD: /usr/bin/php ^/srv/sympress/releases/[A-Za-z0-9][A-Za-z0-9._-]*/vendor/bin/runtime doctor --production --database-health --php-user=www-data --json --no-interaction$
 ```
 
 This checks actual filesystem access, including ACLs, under the PHP identity;
