@@ -98,6 +98,16 @@ final class TemplateHygieneTest extends TestCase
         self::assertStringContainsString('WP_ADMIN_PASSWORD=', $envExample);
     }
 
+    public function testStagingDebugLogStaysOutsideThePublicRoot(): void
+    {
+        // Runtime's staging default WP_DEBUG_LOG=true writes public/wp-content/debug.log.
+        $production = (string) file_get_contents($this->projectDir . '/dev-ops/production.env.example');
+        self::assertMatchesRegularExpression('~^WP_DEBUG_LOG=/\S+$~m', $production);
+        self::assertDoesNotMatchRegularExpression('~^WP_DEBUG_LOG=\S*/public/~m', $production);
+        $local = (string) file_get_contents($this->projectDir . '/.env.example');
+        self::assertDoesNotMatchRegularExpression('~^#?\s*WP_DEBUG_LOG=(?:true|1)\s*$~mi', $local);
+    }
+
     public function testSetupKeepsWordPressUrlsAtThePublicRoot(): void
     {
         $process = new Process(

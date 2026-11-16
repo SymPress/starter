@@ -125,7 +125,7 @@ Recommended production values:
 ```dotenv
 WP_DEBUG=false
 WP_DEBUG_DISPLAY=false
-WP_DEBUG_LOG=true
+WP_DEBUG_LOG=/srv/sympress/shared/var/log/wordpress-debug.log
 SYMPRESS_DISPLAY_DEPRECATED=false
 ```
 
