@@ -4,6 +4,15 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.2.5 — 2026-11-16
+
+- Write the staging debug log to `shared/var/log` outside the public web root.
+- Mirror the nginx deny rules (uploads PHP, XML-RPC, dotfiles, logs) in `dev-ops/.htaccess`.
+- Remove the stale `CVE-2022-3590` Composer audit waiver.
+- Watch `deployment/composer.lock` with Dependabot.
+- Limit the documented Doctor sudoers rule to one release directory.
+- CI: pin `sympress/workflows` to v1.3.2 and run the operations safety tests on Ubuntu 24.04.
+
 ## 1.2.4 — 2026-11-13
 
 - Refresh the locked Runtime, Kernel, Profiler, PHPStan and PHPUnit dependencies.
