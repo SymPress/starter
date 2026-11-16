@@ -108,6 +108,22 @@ final class TemplateHygieneTest extends TestCase
         self::assertDoesNotMatchRegularExpression('~^#?\s*WP_DEBUG_LOG=(?:true|1)\s*$~mi', $local);
     }
 
+    public function testApacheTemplateMirrorsNginxDenyRules(): void
+    {
+        $nginx = (string) file_get_contents($this->projectDir . '/dev-ops/nginx/security.conf');
+        $apache = (string) file_get_contents($this->projectDir . '/dev-ops/.htaccess');
+        $patterns = [
+            'wp-content/(?:uploads|cache|upgrade)/.*\\.(?:php[0-9s]*|pht(?:ml)?|phar|inc)(?:/|$)',
+            '(?:wp/)?xmlrpc\\.php(?:/|$)',
+            '\\.(?!well-known/)',
+            '\\.(?:sql|bak|ini|log|conf|sh|env)(?:$|/)',
+        ];
+        foreach ($patterns as $pattern) {
+            self::assertStringContainsString($pattern, $nginx);
+            self::assertStringContainsString($pattern, $apache);
+        }
+    }
+
     public function testSetupKeepsWordPressUrlsAtThePublicRoot(): void
     {
         $process = new Process(

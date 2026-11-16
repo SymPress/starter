@@ -1,3 +1,12 @@
+# SymPress deny rules: keep in sync with dev-ops/nginx/security.conf.
+<IfModule mod_rewrite.c>
+	RewriteEngine On
+	RewriteRule ^(?:[_0-9a-z-]+/)?wp-content/(?:uploads|cache|upgrade)/.*\.(?:php[0-9s]*|pht(?:ml)?|phar|inc)(?:/|$) - [NC,R=404,L]
+	RewriteRule ^(?:wp/)?xmlrpc\.php(?:/|$) - [NC,F,L]
+	RewriteRule (?:^|/)\.(?!well-known/) - [NC,F,L]
+	RewriteRule \.(?:sql|bak|ini|log|conf|sh|env)(?:$|/) - [NC,F,L]
+</IfModule>
+
 # BEGIN WordPress
 <IfModule mod_rewrite.c>
 	RewriteEngine On
@@ -23,12 +32,6 @@
 	RewriteRule ^(?:(?:[_0-9a-zA-Z-]+)/)?(.*\.php)$ wp/$1 [L]
 	RewriteRule ^[_0-9a-zA-Z-]+/wp-content/(.*) wp-content/$1 [L]
 	RewriteRule . index.php [L]
-
-	##
-    # For local dev systems: redirect Attachment urls to the production system
-    ##
-#    RedirectMatch 302 "(/(?:[^/]*/)?)wp-content/(.*)\.(png|jpe?g)$" "https://domain.wpkunden.de$1wp-content/$2.$3"
-#    RedirectMatch 302 "(/(?:[^/]*/)?)files/(.*)\.(png|jpe?g)$" "https://domain.wpkunden.de$1files/$2.$3"
 </IfModule>
 
 # END WordPress
