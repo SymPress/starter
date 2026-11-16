@@ -90,7 +90,7 @@ ALLOW_UNFILTERED_UPLOADS=false
 FORCE_SSL_ADMIN=true
 WP_DEBUG=false
 WP_DEBUG_DISPLAY=false
-WP_DEBUG_LOG=true
+WP_DEBUG_LOG=/srv/sympress/shared/var/log/wordpress-debug.log
 DISABLE_WP_CRON=true
 # Only when TLS terminates at a controlled reverse proxy:
 # WP_FORCE_SSL_FORWARDED_PROTO=true
