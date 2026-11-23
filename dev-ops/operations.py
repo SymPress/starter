@@ -9,6 +9,7 @@ import os
 import re
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import tarfile
 import tempfile
@@ -83,6 +84,15 @@ def backup(settings, output):
                 wp(settings, 'maintenance-mode', 'deactivate')
 
 
+def adopt_permissions(tree, reference):
+    # Restored media must stay readable by nginx/FPM like the replaced uploads, not private under main()'s umask.
+    owner = reference.stat()
+    mode = stat.S_IMODE(owner.st_mode)
+    for path in [tree, *tree.rglob('*')]:
+        os.chown(path, -1, owner.st_gid)
+        os.chmod(path, mode if path.is_dir() else mode & 0o666)
+
+
 def restore(settings, archive, identity, confirm, *, staging=False, scrub_script=None):
     target = wp(settings, 'option', 'get', 'home').decode().strip()
     environment = wp(settings, 'eval', 'echo wp_get_environment_type();').decode().strip()
@@ -120,6 +130,7 @@ def restore(settings, archive, identity, confirm, *, staging=False, scrub_script
             previous = uploads.with_name('uploads.before-' + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
             uploads.rename(previous)
             shutil.copytree(payload / 'uploads', uploads)
+            adopt_permissions(uploads, previous)
             if staging:
                 wp(settings, 'eval-file', str(Path(scrub_script).resolve(strict=True)))
                 wp(settings, 'option', 'update', 'blog_public', '0')

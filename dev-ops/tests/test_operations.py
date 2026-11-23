@@ -1,6 +1,7 @@
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import subprocess
 import tarfile
@@ -109,6 +110,37 @@ class OperationsTest(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, 'database backup manifest'):
                     ops.restore({}, archive, identity, 'https://target.test')
                 self.assertEqual(wp.call_count, 2)
+
+    def test_restored_uploads_adopt_group_and_mode_of_replaced_uploads(self):
+        # A group other than the primary one shows adoption; native fixtures must not skip.
+        group = 1 if os.geteuid() == 0 else next((gid for gid in os.getgroups() if gid != os.getgid()), os.getgid())
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            sql = b'SELECT 1;'
+            manifest = json.dumps({'version': 1, 'home': 'https://source.test', 'database_sha256': ops.hashlib.sha256(sql).hexdigest()}).encode()
+            archive = tmp / 'source.tar.gz'
+            with tarfile.open(archive, 'w:gz') as tar:
+                for name, mode in [('uploads', 0o700), ('uploads/2026', 0o700)]:
+                    member = tarfile.TarInfo(name);member.type = tarfile.DIRTYPE;member.mode = mode;tar.addfile(member)
+                for name, data in [('database.sql', sql), ('manifest.json', manifest), ('uploads/2026/a.jpg', b'jpg')]:
+                    member = tarfile.TarInfo(name);member.size = len(data);member.mode = 0o600;tar.addfile(member, io.BytesIO(data))
+            identity = tmp / 'key';identity.write_text('test')
+            uploads = tmp / 'shared/uploads';uploads.mkdir(parents=True)
+            os.chown(uploads, -1, group);uploads.chmod(0o2770)
+            def decrypt(argv):
+                import shutil
+                shutil.copyfile(archive, argv[argv.index('--output') + 1])
+            previous_umask = os.umask(0o077)  # main() runs restore under a private umask.
+            try:
+                with patch.object(ops, 'wp', side_effect=[b'https://target.test', b'staging'] + [b''] * 10), \
+                        patch.object(ops, 'command', side_effect=decrypt):
+                    ops.restore({'project': tmp, 'uploads': uploads}, archive, identity, 'https://target.test')
+            finally:
+                os.umask(previous_umask)
+            for path, mode in [(uploads, 0o2770), (uploads / '2026', 0o2770), (uploads / '2026/a.jpg', 0o660)]:
+                with self.subTest(path=path.name):
+                    self.assertEqual(oct(path.stat().st_mode & 0o7777), oct(mode))
+                    self.assertEqual(path.stat().st_gid, group)
 
     def test_log_monitor_uses_cursor_and_sends_only_generic_alert(self):
         with tempfile.TemporaryDirectory() as tmp:
