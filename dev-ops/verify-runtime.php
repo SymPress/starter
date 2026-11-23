@@ -24,6 +24,8 @@ try {
         && defined('DISALLOW_FILE_MODS') && DISALLOW_FILE_MODS
         && defined('WP_DEBUG_DISPLAY') && !WP_DEBUG_DISPLAY
         && defined('FORCE_SSL_ADMIN') && FORCE_SSL_ADMIN
+        // The CVE-2017-14990 audit waiver relies on multisite signup being unavailable.
+        && !is_multisite()
         && $GLOBALS['wpdb']->get_var('SELECT 1') === '1';
     $candidate = defined('SYMPRESS_KERNEL_BUILD_ID') ? constant('SYMPRESS_KERNEL_BUILD_ID')
         : ($_ENV['SYMPRESS_KERNEL_BUILD_ID'] ?? $_SERVER['SYMPRESS_KERNEL_BUILD_ID'] ?? getenv('SYMPRESS_KERNEL_BUILD_ID'));

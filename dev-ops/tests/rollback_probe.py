@@ -35,7 +35,7 @@ def run_case(source, deployer, fpm_binary, outcome):
             (release / 'public/wp/wp-load.php').write_text(
                 '<?php ' + build_id
                 + 'define("DISALLOW_FILE_MODS", true); define("WP_DEBUG_DISPLAY", false); define("FORCE_SSL_ADMIN", true); '
-                + 'function wp_get_environment_type() { return "production"; } function wp_is_file_mod_allowed($context) { return false; } '
+                + 'function wp_get_environment_type() { return "production"; } function wp_is_file_mod_allowed($context) { return false; } function is_multisite() { return false; } '
                 + '$GLOBALS["wpdb"] = new class { public function get_var($query) { return "1"; } };')
             (release / 'public/index.php').write_text(
                 '<?php echo json_encode(["build_id"=>' + php_literal(name) + ']);')
