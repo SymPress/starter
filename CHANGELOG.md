@@ -4,6 +4,12 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.2.7 — 2026-11-23
+
+- Deploy: `deploy:permissions` changes only entries owned by the deploy user in shared `uploads` and `var/log`; deploys no longer fail once PHP-FPM has written media or logs there.
+- Operations: `restore` gives the restored uploads the group and mode of the uploads directory it replaces, so nginx and PHP-FPM can read the media again.
+- Release gate: reject multisite releases, which the CVE-2017-14990 audit waiver assumes (mirrors Demo).
+
 ## 1.2.6 — 2026-11-23
 
 - Lock WordPress 7.1.5, which fixes the 19 WordPress Core advisories published on 2026-11-18 (one critical, four high). New projects no longer start on 7.1.4.
