@@ -26,7 +26,7 @@ jobs:
 
   operations-tests:
     name: Operations safety tests
-    # shortcut: ppa:ondrej/php has no Ubuntu 26.04 (resolute) build; move to packages.sury.org or the distro PHP when it ships php8.5-fpm.
+    # shortcut: pinned to ubuntu-24.04; packages.sury.org also serves resolute, so this can move to ubuntu-latest once verified there.
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -44,9 +44,10 @@ jobs:
       - name: Install native operation fixtures
         run: |
           set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y software-properties-common
-          sudo add-apt-repository --yes ppa:ondrej/php
+          # ppa:ondrej/php is frozen; the maintainer now publishes PHP for Ubuntu at packages.sury.org (setup per https://packages.sury.org/php/README.txt).
+          curl -fsSLo "$RUNNER_TEMP/debsuryorg-archive-keyring.deb" https://packages.sury.org/debsuryorg-archive-keyring.deb
+          sudo dpkg -i "$RUNNER_TEMP/debsuryorg-archive-keyring.deb"
+          echo "deb [signed-by=/usr/share/keyrings/debsuryorg-archive-keyring.gpg] https://packages.sury.org/php/ $(. /etc/os-release && echo "$VERSION_CODENAME") main" | sudo tee /etc/apt/sources.list.d/php.list >/dev/null
           sudo apt-get update
           sudo apt-get install --no-install-recommends -y php8.5-fpm libfcgi-bin nginx
           composer install --no-plugins --no-scripts --prefer-dist --no-interaction --no-progress
