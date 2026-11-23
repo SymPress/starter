@@ -200,6 +200,17 @@ class DeployTest(unittest.TestCase):
             'setfacl -m g:{{log_group}}:--x {{deploy_path}}/shared/var'])
         self.assertFalse(any('setfacl' in command and '.env' in command for command in commands))
 
+    def test_shared_permissions_touch_only_entries_of_the_deploy_user(self):
+        # PHP-FPM owns the media and logs it writes; chgrp/chmod on them fails for the deploy user.
+        result = self.probe('deploy:permissions', PROBE_DOCTOR_JSON=self.doctor_report(('production.readable.0', 'unknown')))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        shared = [command for command in json.loads(result.stdout)['commands']
+                  if '/shared/' in command and ('chgrp' in command or 'chmod' in command)]
+        self.assertEqual(len(shared), 6)
+        for command in shared:
+            self.assertRegex(command, r'^find \S+/shared/\S+ -user "\$\(id -u\)" ')
+        self.assertTrue(all('chgrp -h ' in command for command in shared if 'chgrp' in command))
+
     @staticmethod
     def doctor_report(*checks):
         return json.dumps({'environment': 'production', 'exit': 2, 'checks': [
