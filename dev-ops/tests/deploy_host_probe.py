@@ -182,12 +182,17 @@ def main():
             if iteration:
                 previous = current
                 user_run(['php', 'wp-cli.phar', 'option', 'update', 'permalink_structure', '/%postname%/'], cwd=current)
+                # PHP-FPM owns the media and logs it writes; the next deploy must not need to change them.
+                for written in ('public/wp-content/uploads/2026/11/fpm.jpg', 'var/log/fpm.log'):
+                    run(['sudo', '-u', 'www-data', 'install', '-D', '-m', '0640', '/dev/null', str(deploy_path / 'shared' / written)])
             output = user_run(['php', str(source / 'deployment/vendor/bin/dep'), '-f', str(recipe), 'deploy', 'production', '-n', '--no-ansi'], cwd=source)
             print(output[-600:])
             current = (deploy_path / 'current').resolve(strict=True)
             assert (current / 'vendor/autoload.php').is_file()
             assert (current / 'public/wp/wp-load.php').is_file()
             assert (current / 'var/cache').stat().st_mode & 0o777 == 0o750
+            if iteration:
+                assert (current / 'public/wp-content/uploads/2026/11/fpm.jpg').stat().st_uid == pwd.getpwnam('www-data').pw_uid
             assert not (deploy_path / '.dep/deploy.lock').exists()
             run(['curl', '--fail', '--silent', '--show-error', '--cacert', str(certificate), f'https://127.0.0.1:{https_port}/'])
             absent = run(['curl', '--silent', '--show-error', '--cacert', str(certificate), '--output', '/dev/null',
