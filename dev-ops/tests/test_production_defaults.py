@@ -122,6 +122,50 @@ require $argv[1];
                 finally:
                     self.stop_process(fpm)
 
+    @unittest.skipUnless(FPM and shutil.which('cgi-fcgi'), 'The release gate fixture requires PHP-FPM and cgi-fcgi.')
+    def test_release_gate_rejects_multisite(self):
+        # The CVE-2017-14990 audit waiver relies on multisite signup being unavailable.
+        gate = Path(__file__).resolve().parents[1] / 'verify-runtime.php'
+        with tempfile.TemporaryDirectory(prefix='sympress_release_gate_') as directory:
+            fixture = Path(directory)
+            fixture.chmod(0o755)
+            identity = pwd.getpwnam('www-data') if os.geteuid() == 0 else pwd.getpwuid(os.geteuid())
+            pool = fixture / 'fpm.conf'
+            pool.write_text('[global]\ndaemonize = no\nerror_log = ' + str(fixture / 'fpm.log')
+                            + '\n[fixture]\nuser = ' + identity.pw_name
+                            + '\ngroup = ' + str(identity.pw_gid)
+                            + '\nlisten = ' + str(fixture / 'fpm.sock')
+                            + '\nlisten.mode = 0666\npm = static\npm.max_children = 1\n')
+            for multisite in ('false', 'true'):
+                wp = fixture / 'releases' / ('multisite-' + multisite) / 'public/wp'
+                wp.mkdir(parents=True)
+                (wp / 'wp-load.php').write_text(
+                    '<?php define("DISALLOW_FILE_MODS", true); define("WP_DEBUG_DISPLAY", false); define("FORCE_SSL_ADMIN", true); '
+                    + 'function wp_get_environment_type() { return "production"; } function wp_is_file_mod_allowed($context) { return false; } '
+                    + 'function is_multisite() { return ' + multisite + '; } '
+                    + '$GLOBALS["wpdb"] = new class { public function get_var($query) { return "1"; } };')
+            for path in fixture.rglob('*'):
+                path.chmod(0o755)
+            with subprocess.Popen([FPM, '-F', '-y', str(pool)], stdout=subprocess.DEVNULL,
+                                  stderr=subprocess.DEVNULL) as fpm:
+                self.addCleanup(self.stop_process, fpm)
+                deadline = time.monotonic() + 5
+                while not (fixture / 'fpm.sock').exists() and fpm.poll() is None and time.monotonic() < deadline:
+                    time.sleep(0.02)
+                self.assertTrue((fixture / 'fpm.sock').exists(), 'Fixture FPM socket did not start.')
+                try:
+                    for multisite, expected in (('false', 'ok'), ('true', 'error')):
+                        with self.subTest(multisite=multisite):
+                            response = subprocess.run(
+                                [shutil.which('cgi-fcgi'), '-bind', '-connect', str(fixture / 'fpm.sock')],
+                                env={'SCRIPT_FILENAME': str(gate), 'REQUEST_METHOD': 'POST',
+                                     'SERVER_PROTOCOL': 'HTTP/1.1', 'REDIRECT_STATUS': '200',
+                                     'SYMPRESS_RELEASE_PATH': str(fixture / 'releases' / ('multisite-' + multisite))},
+                                capture_output=True, text=True, timeout=10, check=True)
+                            self.assertIn('"runtime_health":"' + expected + '"', response.stdout)
+                finally:
+                    self.stop_process(fpm)
+
     def assert_php_headers(self, root, fixture, certificate, key, enabled):
         asset_paths = {
             '/wp-content/uploads/report-20261006.png': False,
