@@ -5,11 +5,11 @@
     "license": "GPL-2.0-or-later",
     "require": {
         "php": "^8.5",
-        "sympress/kernel": "^1.1.10",
+        "sympress/kernel": "^1.1.17",
         "sympress/monolog-bundle": "^1.1.4",
         "sympress/wp-cli-console": "^1.0.4",
         "roots/wordpress": "^7.1.1",
-        "sympress/runtime": "^1.2.4",
+        "sympress/runtime": "^1.3.4",
         "wpackagist-theme/twentytwentyfive": "^1.5.0"
     },
     "require-dev": {
