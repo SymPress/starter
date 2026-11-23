@@ -4,6 +4,13 @@ All notable changes to `sympress/starter` will be documented in this file.
 
 The project follows semantic versioning once the first stable release is tagged.
 
+## 1.2.6 — 2026-11-23
+
+- Lock WordPress 7.1.5, which fixes the 19 WordPress Core advisories published on 2026-11-18 (one critical, four high). New projects no longer start on 7.1.4.
+- Lock the current SymPress fix releases: Kernel 1.1.17, Runtime 1.3.4, Monolog Bundle 1.1.9, WP-CLI Console 1.0.5 and Profiler 1.4.3; refresh PHPUnit to 13.4.8.
+- Require Kernel `^1.1.17` and Runtime `^1.3.4`, so a Kernel whose cache metadata the installed Runtime cannot read is no longer installable.
+- Move the Composer advisory policy to `config.audit`, so Dependabot (Composer 2.9) and Composer 2.10+ write the same lock `content-hash` and Dependabot PRs pass `composer validate --strict`.
+
 ## 1.2.5 — 2026-11-16
 
 - Write the staging debug log to `shared/var/log` outside the public web root.
